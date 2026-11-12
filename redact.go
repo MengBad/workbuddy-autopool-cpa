@@ -1,7 +1,5 @@
-// redact.go strips credentials and token-shaped material from any string that
-// might end up in logs, error responses, or CPAMP usage bodies. All plugin
-// code that surfaces upstream error text must route through redactSecrets
-// (or truncateRedacted when a length cap is also needed).
+// Credential stripping: every string that can reach a log, an error response
+// or a CPAMP usage body goes through redactSecrets first.
 package main
 
 import "regexp"

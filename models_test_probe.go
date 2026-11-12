@@ -1,20 +1,5 @@
-// models_test_probe.go implements POST /models/test: a real, billed request
-// that answers "can this model serve me right now, and if not, when?".
-//
-// Two deliberate design points, both learned the hard way:
-//
-//  1. The probe sends a REAL-SIZED body (~25k input tokens). Upstream throttles
-//     by request size, so a tiny "ping" reports healthy while a real long
-//     conversation gets rejected on every turn. A probe that cannot reproduce
-//     the failure it is meant to predict is worse than no probe.
-//  2. It costs credits. Therefore the endpoint accepts exactly ONE model per
-//     call — there is no "test all enabled" batch button, because that would be
-//     an unbounded spend triggered by a single click.
-//
-// The 429 reset time comes from the response BODY, not a Retry-After header:
-// upstream sends none (nor X-RateLimit-*), but writes the reset instant into
-// the message, e.g. "...将在 2026-09-30 02:30:30 UTC+8 重置...". We parse it and
-// honour the declared offset rather than assuming the server's locale.
+// POST /models/test: one real ~25k-token probe that answers "can this model
+// serve me right now, and if not, when?".
 package main
 
 import (

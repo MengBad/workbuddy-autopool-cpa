@@ -1,40 +1,5 @@
-// dailybonus.go implements the Global-realm daily credit reward.
-//
-// WHY THIS EXISTS
-// ---------------
-// A Global (Intl) CodeBuddy account has no daily check-in: the CN "Buddy
-// gas-station" action is a desktop-app deep link (workbuddy://expert), so
-// checkin-activity-status answers active:false forever. The plugin ecosystem
-// therefore treats Global as having no daily income at all — mmqz/cpa-multi-plugins
-// gates it out with "the growth center only exists for CN accounts", and
-// Lxapk/workbuddy-cpa-plugin does the same with "the growth centre only exists
-// for the domestic realm".
-//
-// That is wrong. Global realms serve the whole growth-centre endpoint family
-// (heatmap, streak, tasks, energy, lottery, buddy) at the same billing host.
-// The income path is the activity beacon the official client sends on every
-// chat: one `chat_request_send` event to POST /v2/report. A day with a non-zero
-// `score` in GET /activity/growth/heatmap earns a "Bonus Pack" of 30 credits
-// (package TCACA_code_007_nzdH5h4Nl0 = 平台奖励积分, valid 30 days) which is
-// granted automatically on the NEXT China-time day.
-//
-// Verified 2026-09-28 → 2026-09-29 across 7 accounts: six Global accounts lit by
-// this report alone each received their 30-credit pack the following morning
-// (02:14–02:21 local), plus one account that was lit by a plain client login.
-// Consecutive days also unlock streak tiers (14d → +50, 28d → +150 credits).
-//
-// DESIGN
-//   - Idempotent per account per day. "Today" is read from the API's own
-//     heatmap (the last cell), never from local time, so there is no timezone
-//     arithmetic and China-time day boundaries need no special handling.
-//   - The report POST is deliberately NOT retried. The event is day-idempotent
-//     upstream, but a blind resend would double-count the day (score 2 → 4).
-//     A failed send is picked up by the next scheduled tick instead.
-//   - Several ticks per day (dailyBonusHours). Because the runner skips days
-//     that are already lit, extra ticks are free and act as a safety net.
-//   - Global accounts only. CN accounts keep using the check-in path, and their
-//     growth domain differs (copilot.tencent.com), which this file does not
-//     implement.
+// The Global-realm daily credit reward: reports one growth activity event per
+// account per day so each Global account earns its 30-credit Bonus Pack.
 package main
 
 import (

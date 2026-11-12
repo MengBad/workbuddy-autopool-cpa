@@ -1,8 +1,6 @@
-// payload.go rewrites the outgoing chat completion request body before it's
-// forwarded upstream. The single-pass entry point is prepareUpstreamBody; the
-// four *InPlace helpers are the field-level mutations it composes, and the
-// legacy *ForUpstream / forceStreamBody wrappers exist for tests and other
-// call sites that need them individually.
+// Outgoing request rewriting: one JSON pass that forces streaming, normalizes
+// tools, rewrites the system prompt, ensures a system message, rewrites the
+// model id and injects the chosen reasoning effort.
 package main
 
 import (

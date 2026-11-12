@@ -1,17 +1,5 @@
-// promotions.go implements upstream promotions (modelPromotions) and per-model
-// busy level.
-//
-// Two independent things live here because both are "此刻的事实" that the panel
-// shows next to a model name:
-//
-//   - promotions: /v3/config returns modelPromotions — discount campaigns with a
-//     daily window in an explicit timezone, or a validity range. The badge is a
-//     function of NOW: outside its own window it must not be drawn. We never
-//     invent a discount; every number (factor, label, colour, hover text) comes
-//     from upstream.
-//   - busy: POST /v2/chat/busy answers how queued a model is right now. CN only —
-//     the international gateway returns 404 for this route. Levels are runtime
-//     facts and are never persisted.
+// Upstream promotions (modelPromotions) and per-model busy level — both are
+// facts about *this moment*, so both are evaluated against the clock.
 package main
 
 import (

@@ -1,6 +1,5 @@
-// usage.go implements the UsagePlugin capability: the host calls handleUsage
-// after every request with a canonical record, and we forward to CPAMP. The
-// legacy publishUsage path is kept for hosts without UsagePlugin wiring.
+// The UsagePlugin capability: the host hands us a canonical record after every
+// request and we forward it to CPAMP.
 package main
 
 import (

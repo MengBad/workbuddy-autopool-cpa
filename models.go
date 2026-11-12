@@ -1,7 +1,5 @@
-// models.go implements the ModelProvider capability: static and per-auth
-// model lists, dynamic model discovery via the upstream models API, alias
-// reverse resolution (client-facing alias → upstream model id), and the
-// host-config oauth-excluded-models filter.
+// The ModelProvider capability: static and per-auth model lists, dynamic
+// discovery, alias reverse resolution, and the oauth-excluded-models filter.
 package main
 
 import (

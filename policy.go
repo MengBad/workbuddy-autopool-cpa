@@ -1,8 +1,5 @@
-// policy.go is the pure decision layer for credit-driven lifecycle actions:
-// given an account's region and current credits, decide whether to disable
-// (CN), delete (Global), re-enable (CN after check-in restores credits), or
-// leave it alone. No I/O happens here — reconcileOneAccount consumes these
-// decisions and applies them via the lifecycle.go authfile helpers.
+// The pure decision layer for credit-driven lifecycle actions: given a region
+// and a credit snapshot, decide disable / delete / re-enable / leave alone.
 package main
 
 import (

@@ -1,9 +1,5 @@
-// retry.go implements the executor-side failover loop: when the account a
-// request was routed to answers HTTP 429 / code 6004, the plugin retries the
-// SAME request on another enabled account before returning an error to the
-// client. The list of eligible accounts comes from the host auth store
-// (hostAuthList + hostAuthGet — the same source the panel/usage use), not from
-// a new parallel mechanism.
+// The executor-side failover loop: on 429 / 6004 / 14018, retry the same
+// request on another enabled account before returning an error to the client.
 package main
 
 import (

@@ -1,11 +1,5 @@
-// failover.go implements non-destructive multi-account cooldowns for upstream
-// rate limits and explicit account-credit exhaustion before any stream chunk.
-//
-// The CPA host's built-in cooldown+retry only applies to in-host executors;
-// c-shared plugins execute upstream requests themselves, so a 429 never
-// reaches the host selector and no failover happens. This file keeps an
-// in-plugin per-account cooldown map and marks accounts that hit 429 so the
-// executor retry loop can pick another enabled account for the SAME request.
+// Non-destructive multi-account cooldowns for upstream rate limits and explicit
+// credit exhaustion, applied before any stream chunk is emitted.
 package main
 
 import (

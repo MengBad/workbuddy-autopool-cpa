@@ -1,7 +1,5 @@
-// checkin.go implements daily check-in for CN accounts: the manual
-// handleManualCheckin endpoint, the 09:00 / 21:00 auto scheduler, and the
-// per-account mutex that prevents duplicate check-ins from racing browser
-// tabs. Global accounts are excluded — they use one-shot trial claims instead.
+// CN daily check-in: the manual endpoint, the 09:00 / 21:00 scheduler, and the
+// per-account mutex that stops two browser tabs from double check-in.
 package main
 
 import (

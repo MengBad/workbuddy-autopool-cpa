@@ -1,7 +1,5 @@
-// oauth.go implements the AuthProvider login flow: browser-driven OAuth via
-// CodeBuddy's login endpoints (CN and Global), login state polling, and token
-// refresh. Each login flow gets an isolated cookie jar so multi-account flows
-// never cross-contaminate session state.
+// The AuthProvider login flow: browser-driven OAuth for both realms, login
+// state polling, and token refresh, each with an isolated cookie jar.
 package main
 
 import (

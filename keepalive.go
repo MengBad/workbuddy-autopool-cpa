@@ -1,23 +1,5 @@
-// keepalive.go implements proactive daily token refresh for workbuddy auths.
-//
-// Motivation: upstream (codebuddy.cn / workbuddy.ai) periodically kills
-// Keycloak offline sessions; once that happens the stored refresh token is
-// rejected with 12153 "Offline user session not found" and every billing /
-// chat call for the account returns a 401 HTML page (surfacing in the panel
-// as "parse failed: invalid character '<'"). Refreshing the access token
-// daily keeps the offline session alive, the same way a real client would.
-//
-// Design:
-//   - Runs on the existing schedulerLoop at 22:00 local (keepaliveHours is
-//     separate from checkinHours so the two cadences can evolve independently).
-//   - Iterates all workbuddy auths via host.auth.list/get, calls
-//     {realm-base}/v2/plugin/auth/token/refresh with X-Refresh-Token via
-//     the host HTTP bridge (host.http.do).
-//   - On success the auth file is persisted via host.auth.save (host watcher
-//     reloads it; in-memory host token stays stale until then, which is fine
-//     since the old access token typically remains valid for a long time).
-//   - On 12153 (session dead) the auth is flagged disabled + note prefixed
-//     "[SESSION-DEAD]" so it stops receiving traffic until manual re-login.
+// Proactive daily token refresh. Upstream periodically kills Keycloak offline
+// sessions (12153), after which every call for the account returns 401.
 package main
 
 import (

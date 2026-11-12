@@ -1,21 +1,5 @@
-// models_config.go implements the Model Manager backend for v0.9.7
-// (PLAN-0907, WORKER-1a):
-//
-//  1. The per-realm model catalog (modelDef): one source for the legacy
-//     wbModels()/wbCNModels() entries plus the tier aliases, hidden/verified
-//     models and the utility/internal models the panel renders.
-//  2. Upstream catalog discovery per account: Global /v2/enterprises/personal/models
-//     ∪ /v3/config, CN copilot.tencent.com /console/enterprises/personal/models
-//     ∪ /v3/config, with the WorkBuddy client UA. The context window is the
-//     *max* supported length (contextWindow.supportedLengths[-1]), never
-//     contextWindow.defaultLength (decision 6 in PLAN-0907).
-//  3. The plugin state file workbuddy-state.json (atomic save) with the
-//     default → realm → per-account layering resolved by effectiveSettings.
-//  4. The GET/POST /models/config management endpoint (+ ?reset=1).
-//
-// Contract: PLAN-0907 "Kontrak endpoint" (frozen). The response shape is the
-// one the approved panel mockup (mockups/model-settings-mockup.html, WORKER-2)
-// renders.
+// The Model Manager backend: the per-realm model catalog, per-realm settings,
+// and the model rows the panel renders (multiplier / promo / busy / effort).
 package main
 
 import (

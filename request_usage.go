@@ -1,16 +1,5 @@
-// request_usage.go implements the per-request CodeBuddy usage log ("Usage
-// CodeBuddy" panel section): every chat request that flows through this
-// plugin is recorded — account, model, token in/out/cache and the upstream
-// `credit` value extracted from the terminal SSE chunk — into a permanent
-// JSONL file next to the auth store.
-//
-// Source of truth is the JSONL file; an in-memory ring (recent records) serves
-// fast panel renders and a day-bucket cache backs the summary totals. Storage
-// is append-only JSONL (one record per line) so a crash can corrupt at most
-// the trailing line. Rotation splits the file at ~50MB into
-// request-usage-<YYYY-MM>.jsonl (older data is retained, never deleted).
-//
-// No credentials/tokens are ever stored — only usage metadata.
+// The per-request usage log: account, model, token in/out/cache and the
+// upstream credit value, one JSONL line per request.
 package main
 
 import (

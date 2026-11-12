@@ -1,9 +1,5 @@
-// lifecycle.go implements credit-based auth lifecycle for workbuddy:
-//   - CN exhausted  → disable auth file (disabled:true), re-enable after check-in when credits return
-//   - Global exhausted → delete auth file (one-shot quota)
-//   - Unknown credits → no-op (never mis-kill)
-//   - Hard credit errors from executor → reconcileByUID rechecks credits then applies policy
-//   - Soft rate limits → do not delete Global
+// Credit-driven auth lifecycle: CN exhausted → disable, Global exhausted →
+// delete, unknown credits → no-op, check-in restoring credits → re-enable.
 package main
 
 import (

@@ -1,9 +1,5 @@
-// host_bridge.go routes every upstream HTTP call through the CPA host's
-// http bridge (host.http.do / host.http.do_stream / stream_read / stream_close).
-// Production traffic always uses the bridge so request-log captures outbound
-// calls and host transport policy (proxy, timeout) applies. The *Direct
-// variants are the test-only fallback used when the bridge is unavailable
-// (unit tests, or hosts older than v7.2.x without the http bridge RPC).
+// Every upstream HTTP call, routed through the CPA host bridge so request-log
+// captures it and host transport policy applies. *Direct is the test fallback.
 package main
 
 import (

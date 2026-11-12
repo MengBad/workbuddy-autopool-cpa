@@ -1,19 +1,5 @@
-// update_check.go implements the "new version available" checker for the
-// panel badge (PLAN-0907 decision 12). On GET /update/check (wired by W1d into
-// handleManagement) it compares plugins[0].version from the GitHub release
-// registry against the build version, caching the result for 6 hours.
-//
-// Hard requirements (PLAN-0907 brief W1c):
-//   - Fetch the release-attached registry
-//     (releases/latest/download/registry.json), NOT raw/main — the main-branch
-//     copy is bumped ahead of the actual release and would announce versions
-//     that cannot be installed yet.
-//   - Silent fail: offline / GitHub down / bad JSON → available:false with
-//     current filled in. The update check must never surface an error to the
-//     panel or block any other feature.
-//   - Cache 6h + on-demand force refresh (refresh=1).
-//   - seenVersion persistence ("Skip this version") via the shared state API;
-//     legacy standalone markers are migrated on first read.
+// The "new version available" checker behind the panel badge: compares the
+// release registry against the build version, cached for 6 hours, silent fail.
 package main
 
 import (

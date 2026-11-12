@@ -1,22 +1,5 @@
-// pool.go implements the international (Global) account pool with a hard
-// minimum-availability guarantee.
-//
-// The upstream plugin already fails a single request over to another account
-// when one answers 429 / 6004 / 14018. That keeps ONE request alive, but it
-// does not keep the POOL alive: once every Global account drifts into
-// exhausted/quarantine, requests start failing with 429 and nothing refills the
-// pool. This file adds the missing layer:
-//
-//  1. a live view of every workbuddy credential (state, credits, quarantine),
-//  2. a min_available_accounts invariant that is re-evaluated on every observed
-//     failure and on every monitor tick,
-//  3. persistence of quarantine windows + credit snapshots across restarts
-//     (workbuddy-pool.json in the same data dir as workbuddy-state.json).
-//
-// Identity: the host re-issues auth_index on every restart, so persisted state
-// is keyed by the account UID (falling back to auth id / file name). Host list
-// is the source of truth for which accounts EXIST; the pool file is the source
-// of truth for what we LEARNED about them.
+// The account pool: per-account state, credits, quarantine windows, the
+// minimum-availability guarantee, and UID-keyed persistence.
 package main
 
 import (

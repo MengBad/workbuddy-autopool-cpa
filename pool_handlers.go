@@ -1,6 +1,5 @@
-// pool_handlers.go wires the pool management endpoints registered in
-// management.go. It is deliberately separate from management.go so the pool
-// feature can be reviewed (and disabled) in one place.
+// The /pool* management endpoints, kept separate from management.go so the
+// pool feature can be reviewed (and disabled) in one place.
 package main
 
 import (

@@ -1,8 +1,5 @@
-// authfile.go owns every physical auth-file path the plugin touches: the
-// workbuddy-<uid>.json naming rule, UID sanitization (path-traversal defense),
-// path safety checks, and the read / write / delete helpers that talk to the
-// host's auth store via host.auth.* RPC. Callers above (lifecycle reconcile)
-// decide when to disable / re-enable / delete; this file decides how.
+// Auth file paths: the workbuddy-<uid>.json naming rule, UID sanitization
+// (path-traversal defense), and the read/write/delete helpers over host.auth.*.
 package main
 
 import (

@@ -1,17 +1,5 @@
-// queue.go turns upstream's queue rejections into something an operator can act
-// on, and makes sure a queue rejection never triggers a pointless account swap.
-//
-// Upstream expresses waiting with three business codes:
-//
-//	6020  waiting      — you are in a queue, the answer carries your position
-//	6021  queue full   — the queue itself is saturated
-//	6022  at capacity  — the model has hit its concurrent limit
-//
-// The queue belongs to the MODEL and the platform, not to the account: switching
-// accounts puts you at the same position. So a queue rejection must stop the
-// failover loop (no account swap) and must not be retried automatically — a
-// queue thousands deep will not be reached by retrying, and every retry spends a
-// real request.
+// Upstream queue rejections (6020 / 6021 / 6022) turned into something an
+// operator can act on, and never into a pointless account swap.
 package main
 
 import (

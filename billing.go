@@ -1,8 +1,5 @@
-// billing.go owns the upstream billing API surface: check-in status, user
-// resource (credits / packages), payment type, and the perform-* call wrappers
-// for daily check-in and trial claim. Includes the shared JSON helpers used
-// to tolerate the upstream's loosely-typed response shapes, and the region
-// helpers that decide CN vs Global endpoint.
+// The upstream billing API surface: check-in status, user resource, payment
+// type, and the perform-* wrappers for check-in and trial claim.
 package main
 
 import (

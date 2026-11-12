@@ -1,7 +1,5 @@
-// attempt_admission.go bounds chat concurrency per account without a local
-// waiting queue. A busy candidate is skipped so another enabled account in
-// the same realm can answer immediately. The host may still enforce its own
-// request scheduling before the plugin executor is called.
+// Per-account chat concurrency bound without a local waiting queue: a busy
+// candidate is skipped so another enabled account in the same realm can answer.
 package main
 
 import (

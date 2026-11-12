@@ -1,8 +1,5 @@
-// models_integrate.go wires the Model Manager endpoints that need cross-module
-// access (W1d): the upstream refresh fan-out, the per-model live test and the
-// legacy models stub removal glue. It exists as a separate file so
-// models_config.go (W1a) and update_check.go (W1c) stay untouched; everything
-// here is glue over the pieces W1a/W1c delivered.
+// Model Manager glue that needs cross-module access: the upstream refresh
+// fan-out, prefix↔realm resolution, and the post-save host reload.
 package main
 
 import (

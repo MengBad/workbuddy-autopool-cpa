@@ -1,8 +1,5 @@
-// stream.go owns the upstream SSE data plane: emitting cleaned chunks back to
-// the host stream (streamEmit/close), pumping the upstream SSE in a goroutine
-// with 429 failover (pumpWithFailover), collecting it synchronously
-// (collectStreamAttempt in main.go), and the SSE-frame helpers that re-frame,
-// filter, and aggregate chunks.
+// The upstream SSE data plane: emitting cleaned chunks back to the host,
+// pumping with failover, and the frame helpers that re-shape what arrives.
 package main
 
 import (

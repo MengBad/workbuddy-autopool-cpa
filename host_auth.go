@@ -1,6 +1,5 @@
-// host_auth.go wraps the host's auth-store RPC (host.auth.list / get /
-// get_bundle). These are the only paths the plugin uses to read auth files;
-// writes go through hostAuthPersist / hostAuthPersistMigrate in lifecycle.go.
+// Host auth-store RPC wrappers (host.auth.list / get / get_bundle) — the only
+// paths the plugin uses to read auth files.
 package main
 
 import (

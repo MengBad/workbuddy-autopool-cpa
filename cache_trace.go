@@ -1,6 +1,5 @@
-// cache_trace.go records bounded, content-free request fingerprints alongside
-// accounting. It never changes the request/CID and never stores prompt text,
-// headers, credentials, tool names/arguments, or raw upstream errors.
+// Bounded, content-free request fingerprints recorded alongside accounting.
+// Never stores prompt text, headers, credentials or raw upstream errors.
 package main
 
 import (

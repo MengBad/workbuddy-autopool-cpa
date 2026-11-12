@@ -1,5 +1,5 @@
-// panel.go serves the management dashboard: the aggregated account list the
-// web UI consumes (buildDashboardEx) and the embedded HTML page itself.
+// The management dashboard: the aggregated account list the panel consumes
+// and the embedded HTML resource itself.
 package main
 
 import (

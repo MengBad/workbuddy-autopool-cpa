@@ -1,7 +1,5 @@
-// usage_config.go decodes plugin config from config_yaml on every
-// register/reconfigure call and resolves the CPAMP usage report URL/key.
-// All plugin-level config lives here so the rest of the plugin reads
-// consistent, lock-protected snapshots.
+// Plugin config decoding from config_yaml on every register/reconfigure, and
+// resolution of the CPAMP usage report URL and key.
 package main
 
 import (

@@ -1,6 +1,5 @@
-// management.go implements the CodeBuddy management API and web panel:
-// account dashboard (nickname, credits, plan, check-in streak), manual/auto
-// check-in (daily at 09:00 and 21:00 local time), and quota refresh.
+// The management API and web panel route table, plus plugin-layer auth
+// (constant-time Bearer + per-IP token bucket).
 package main
 
 import (
