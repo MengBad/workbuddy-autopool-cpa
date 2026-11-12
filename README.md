@@ -3,7 +3,7 @@
 每次刷新按上游目录读取积分倍率与活动折扣、逐模型显示繁忙度、单个模型真实体积可用性测试、<br>
 以及一套围绕账号池的运维能力。</p>
 
-> **本项目是 [`zidanefaqih/codebuddy-intl-cpa`](https://github.com/zidanefaqih/codebuddy-intl-cpa) 的再维护分支（v0.14.0）。**
+> **本项目是 [`zidanefaqih/codebuddy-intl-cpa`](https://github.com/zidanefaqih/codebuddy-intl-cpa) 的再维护分支（当前 v0.14.1）。**
 > 插件内部标识仍是 `workbuddy`，凭据格式、模型名、配置键、面板路径全部沿用，
 > 现有账号与客户端无需任何迁移。自动注册/批量补号已在 0.12 退役（见「与 0.11 的差异」）。
 
@@ -179,6 +179,8 @@
 - **池口径**：`pool_realm` 可选 `global` / `any`。
   **如果你只有国内账号，务必设成 `any`** —— 否则可用数永远是 0/N，告警一直响（0.11 遗留的一个真实坑）。
 - **手动隔离 / 解除**：面板勾选即可，立即重算池状态。
+- **池子不够用时只提示，不自动创建账号**：面板会显示缺口数量并指向「＋ 导入账号」。
+  0.12 起没有任何注册入口——见下一节。
 - **持久化**：`workbuddy-pool.json`，key 用 **UID**（`auth_index` 每次重启都变，用它当 key 隔离会失效）。
   重启时把未过期窗口灌回路由冷却表，不会重启后又去撞一个已知耗尽的号。
 
@@ -214,7 +216,7 @@
 每次打 tag 都由 CI 产出 linux/amd64 的 `workbuddy.so`：
 
 ```bash
-V=0.14.0
+V=0.14.1
 curl -fLO "https://github.com/MengBad/workbuddy-autopool-cpa/releases/download/v$V/workbuddy_${V}_linux_amd64.zip"
 unzip -o "workbuddy_${V}_linux_amd64.zip"        # 解出 workbuddy.so
 cp workbuddy.so /opt/cpa/plugins/workbuddy.so    # Docker 下 /opt/cpa/plugins 是 bind mount
@@ -241,7 +243,7 @@ docker restart cpa
 
 # 4) 确认
 docker logs cpa 2>&1 | grep "plugin registered.*workbuddy"
-# plugin registered plugin_id=workbuddy ... version=0.14.0
+# plugin registered plugin_id=workbuddy ... version=0.14.1
 ```
 
 回滚：`cp "$BK/workbuddy.so" /opt/cpa/plugins/workbuddy.so && docker restart cpa`
@@ -327,7 +329,7 @@ plugins:
 `/v0/resource/plugins/workbuddy/panel`，`go:embed` 进二进制。包含：
 
 - **账号表**：积分、区域、并发、签到状态、今日用量
-- **账号池区块**：可用/最低、进度条、隔离/解除、池口径
+- **账号池区块**：可用/最低、进度条、逐账号池状态表、隔离/解除、池口径
 - **模型管理**（国内/国际两个 tab）：模型列表 · 前缀 · 高级 · **诊断**
   - 模型行 8 列：勾选 / 模型 ID / 名称+徽标 / **推理档** / 上下文 / **预算** / 倍率 / 测试
   - 倍率显示折后价，原价用删除线保留；活动徽标是「此刻」的函数
@@ -342,15 +344,16 @@ plugins:
 ## 验证记录（2026-11-12，线上实测）
 
 ```
-cnwb/  : 55 个模型        intlwb/: 0 个（国际版无账号，按设计不发布）
-models: 73     有倍率: 45     有活动: 12     有繁忙度: 26     有推理档位: 28
-busy_at: 2026-11-12T11:16:38Z   （采集成功）
-活动样例: glm-5.2   夜间折扣  7:50–23:00 (Asia/Shanghai)
-          hy3      限时免费  2026-07-06 — 2026-11-16
-繁忙度样例: glm-5.3 → busy    deepseek-v4-pro → idle    hy3 → idle
+/v1/models : cnwb/ 50 个    intlwb/ 0 个（国际版无账号，按设计不发布）    合计 128
+CN 目录    : 上游 62 + 目录兜底 6 = 68 行
+             有倍率 44   有活动 8   有繁忙度 21   有推理档位 23
+busy_at    : 2026-11-12T14:29:13Z（采集成功）
+活动样例   : glm-5.2  夜间折扣  7:50–23:00 (Asia/Shanghai)
+             hy3     限时免费  2026-07-06 — 2026-11-16
 ```
 
-`go vet` 干净，`go test -race -count=1 ./...` 全绿（含上游 60+ 既有测试）。
+`gofmt -l` 无输出，`go vet` 干净，`go test -race -count=1 ./...` 全绿（52 个测试文件），
+`CGO_ENABLED=1 go build -buildmode=c-shared` 通过，CI 在 GitHub 上同样四步全绿。
 
 ---
 

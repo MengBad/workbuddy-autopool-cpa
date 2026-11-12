@@ -362,7 +362,7 @@ button .spin{border-color:var(--on-acc);border-top-color:transparent}
 .acard select{width:100%;background:var(--input-bg);border:1px solid var(--border);border-radius:8px;color:var(--fg);padding:8px 10px;font-size:13px}
 .acard select:disabled{opacity:.5}
 .acard code{background:var(--code-bg);color:var(--code-fg);padding:1px 5px;border-radius:4px;font-size:11px}
-/* 国际账号池：状态徽章与注册会话卡 */
+/* 账号池：状态徽章 */
 .badge.promo{background:transparent;border:1px solid var(--acc);color:var(--acc);font-weight:600}
 .diag{display:grid;grid-template-columns:180px 1fr;gap:6px 14px;font-size:12.5px}
 .diag .k{color:var(--mut)}
@@ -388,12 +388,6 @@ button .spin{border-color:var(--on-acc);border-top-color:transparent}
 .pstate.exhausted{background:var(--err-soft);color:var(--err);border-color:var(--err-border)}
 .pstate.quarantined{background:var(--warn-soft);color:var(--warn);border-color:var(--warn-border)}
 .pstate.disabled,.pstate.invalid{background:var(--surface-muted);color:var(--mut)}
-.pool-reg{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:10px}
-.pool-reg .hd{display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:6px}
-.pool-reg .url{font-family:ui-monospace,monospace;font-size:11.5px;word-break:break-all;background:var(--code-bg);color:var(--code-fg);border-radius:6px;padding:7px 9px;display:block;margin:6px 0}
-.pool-reg .meta{color:var(--mut);font-size:11.5px;line-height:1.6}
-.pool-reg .acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
-.pool-lack{color:var(--mut);font-size:12px;padding:6px 0}
 
 .mm-note{grid-column:1/-1;background:var(--ok-soft);border:1px solid var(--ok-border);color:var(--fg);border-radius:8px;padding:10px 14px;font-size:12.5px}
 .mmod pre.yaml{background:var(--code-bg);border:1px solid var(--border);border-radius:8px;padding:12px;font-size:12px;font-family:ui-monospace,monospace;color:var(--code-fg);overflow-x:auto;margin-top:10px;display:none;white-space:pre}
@@ -558,12 +552,12 @@ button .spin{border-color:var(--on-acc);border-top-color:transparent}
     <button type="button" class="ftag" data-region="exhausted" onclick="filterRegion('exhausted',this)"><span data-i18n="已耗尽">已耗尽</span> <span class="cnt" id="cntExhausted">0</span></button>
   </div>
   <div class="summary card" id="summaryBox" style="display:none"></div>
-  <!-- ============ 国际账号池（min_available_accounts 保证 + 自动补号） ============ -->
+  <!-- ============ 账号池（min_available_accounts 保证 + 插件内 failover） ============ -->
   <div class="pool-sec" id="poolSec">
     <div class="summary card" style="margin-bottom:14px">
       <div class="summary-hd">
         <div>
-          <div class="summary-title"><span data-i18n="国际账号池 · 最低可用保证">国际账号池 · 最低可用保证</span></div>
+          <div class="summary-title"><span data-i18n="账号池 · 最低可用保证">账号池 · 最低可用保证</span></div>
           <div class="summary-meta" id="poolMeta" data-i18n="加载中…">加载中…</div>
         </div>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
@@ -579,7 +573,6 @@ button .spin{border-color:var(--on-acc);border-top-color:transparent}
         <div class="pb-meta" id="poolBarMeta"></div>
       </div>
       <div class="bar" style="margin-top:12px;margin-bottom:0">
-        <label class="toggle" title="可用账号数低于最低要求时自动发起国际版注册" data-i18n-title="可用账号数低于最低要求时自动发起国际版注册"><input type="checkbox" id="poolAutoToggle" onchange="poolToggleAuto(this.checked)"> <span data-i18n="自动补号">自动补号</span></label>
         <label class="language-control"><span data-i18n="最低可用">最低可用</span>
           <select id="poolMinSel" onchange="poolSetMin(this.value)">
             <option value="1">1</option><option value="2">2</option><option value="3">3</option>
@@ -588,8 +581,7 @@ button .spin{border-color:var(--on-acc);border-top-color:transparent}
         </label>
         <span class="toggle" id="poolWhen"></span>
         <span style="flex:1"></span>
-        <button type="button" class="sec" onclick="poolRegisterStart(this)"><span data-i18n="＋ 立即注册国际账号">＋ 立即注册国际账号</span></button>
-        <button type="button" class="sec" onclick="poolRegisterRefresh(this)"><span data-i18n="↻ 刷新注册状态">↻ 刷新注册状态</span></button>
+        <button type="button" class="sec" onclick="openImportModal()"><span data-i18n="＋ 导入账号">＋ 导入账号</span></button>
       </div>
     </div>
     <div class="tbl-wrap" id="poolTableWrap" style="display:none">
@@ -607,14 +599,6 @@ button .spin{border-color:var(--on-acc);border-top-color:transparent}
         </tr></thead>
         <tbody id="poolRows"></tbody>
       </table>
-    </div>
-    <div class="summary card" id="poolRegCard" style="display:none;margin-top:14px">
-      <div class="summary-hd">
-        <div class="summary-title"><span data-i18n="自动补号 / 注册会话">自动补号 / 注册会话</span></div>
-        <div class="summary-meta" id="poolRegMeta"></div>
-      </div>
-      <div id="poolRegSessions"></div>
-      <div class="pkgs" id="poolRegHistory"></div>
     </div>
   </div>
   <div id="tableWrap" class="tbl-wrap">
@@ -899,6 +883,24 @@ button .spin{border-color:var(--on-acc);border-top-color:transparent}
 <script>
 const API = "/v0/management/plugins/workbuddy";
 
+// Account-pool state. Declared here, not next to the pool code, because
+// load() runs at script end and reads these through poolLoad(): a `let`
+// declared further down would still be in its temporal dead zone and every
+// pool render would throw "Cannot access 'lastPool' before initialization".
+let lastPool=null;
+let poolPicked=new Set();
+// Poll interval state. Same reason as above: restartPollers() is called from
+// top-level code near the end of this script, and a `const` declared below
+// that call is still in its temporal dead zone — the throw aborted the whole
+// script, which is why the pool section and the usage table never rendered.
+const POLL_KEY="workbuddy-poll-ms";
+const POLL_CHOICES=[5000,15000,30000,60000,300000];
+const POLL_DEFAULT=5000;
+// usageTimer is read by restartPollers(), which top-level code calls before the
+// usage section's own declarations run — a `let` there would be in its TDZ and
+// `typeof` on it throws (unlike an undeclared name).
+let usageTimer=null;
+
 // Authored UI messages only: data values and API identifiers are never translated.
 const PANEL_LANGUAGE_KEY = "workbuddy-panel-language";
 const PANEL_EN = {
@@ -1021,6 +1023,37 @@ const PANEL_EN = {
   "未知套餐": "Unknown plan",
   "全部账号": "All accounts",
   "国际账号": "Global accounts",
+  "账号池 · 最低可用保证": "Account pool · minimum availability",
+  "上游模型数": "Models served upstream",
+  "目录兜底模型数": "Catalog-only fallback rows",
+  "显示的模型数": "Rows shown",
+  "＋ 导入账号": "+ Import account",
+  "可用账号": "Available",
+  "可用（国际）": "Available (Global)",
+  "已禁用": "Disabled",
+  "上次检查": "Last check",
+  "可用账号 / 最低要求": "Available / minimum",
+  "监控间隔 ": "check every ",
+  "池健康": "pool healthy",
+  "账号池加载失败": "Could not load the pool",
+  "账号池已刷新": "Pool refreshed",
+  "刷新积分并检查": "↻ Refresh credits and re-check",
+  "隔离选中": "⏸ Quarantine selected",
+  "解除隔离": "▶ Release",
+  "请先勾选账号": "Select an account first",
+  "最低可用": "Minimum available",
+  "设置失败": "Could not save",
+  "最低可用已设为 ": "Minimum available set to ",
+  "已隔离 ": "Quarantined ",
+  "已解除 ": "Released ",
+  " · 失败 ": " · failed ",
+  "上次检查 ": "last check ",
+  "缺口 ": "short by ",
+  " 个账号：请从面板导入凭据补足。插件不会自己创建账号。": " account(s). Import a credential from the panel to close the gap; the plugin does not create accounts itself.",
+  "满足最低可用保证：请求在池内失败可自动换号，不依赖宿主重试。": "Minimum satisfied: a failed request fails over inside the pool without relying on host retries.",
+  "⚠ 可用账号低于最低要求 — 请从面板导入账号": "⚠ Below the minimum — import an account from the panel",
+  "✅ 池健康": "✅ Pool healthy",
+  "账号池": "Pool",
   "国内账号": "CN accounts",
   "已耗尽账号": "Exhausted accounts",
   "CodeBuddy 账号管理": "CodeBuddy Accounts Panel",
@@ -1919,8 +1952,6 @@ async function refreshConcurrencyBadges(){
     });
   }catch(_){/* transient: next tick retries; no error toast spam */}
 }
-restartPollers();
-(function(){const el=document.getElementById("pollSel");if(el)el.value=String(pollMs());})();
 // Lazy-load: fetch credits for all cards that lack them, concurrently.
 // Each card fetches independently; failed ones retry once after 2s.
 // A row is complete when it has credits AND its daily piece: the growth-day
@@ -2281,7 +2312,7 @@ async function load(force, btn){
     if(!accounts.length){
       g.innerHTML=tr("<div class=\"loading\">暂无 CodeBuddy 账号</div>");
       renderSummary([]);
-      // 池为空时恰好是自动补号最需要展示状态的场景。
+      // 池为空时仍然要渲染池区块，否则运维看不到「为什么是 0」。
       poolLoad(false);
       if(force) toast(tr("数据已刷新"), "warn", tr("暂无 CodeBuddy 账号"));
       return;
@@ -2450,11 +2481,9 @@ async function setRegion(v){
 }
 
 // ============================================================================
-// 国际账号池：min_available_accounts 保证 + 插件内 failover + 自动补号
+// 账号池：min_available_accounts 保证 + 插件内 failover
 // ============================================================================
 const POOL_STATE_LABEL={active:"可用",exhausted:"已耗尽",quarantined:"隔离中",disabled:"已禁用",invalid:"凭据异常"};
-let lastPool=null;
-let poolPicked=new Set();
 
 function poolStateLabel(s){ return tr(POOL_STATE_LABEL[s]||s||"—") }
 
@@ -2503,8 +2532,6 @@ async function poolLoad(force,btn){
 }
 
 function poolRender(d){
-  const auto=document.getElementById("poolAutoToggle");
-  if(auto&&typeof d.auto_register==="boolean") auto.checked=d.auto_register;
   const minSel=document.getElementById("poolMinSel");
   if(minSel&&d.min_available!=null){
     const v=String(d.min_available);
@@ -2518,9 +2545,8 @@ function poolRender(d){
   const globals=accts.filter(a=>a.region==="global");
   const unhealthy=avail<min;
   document.getElementById("poolMeta").textContent =
-    (unhealthy? tr("⚠ 可用账号低于最低要求 — 插件会立即发起补号"): tr("✅ 池健康"))
+    (unhealthy? tr("⚠ 可用账号低于最低要求 — 请从面板导入账号"): tr("✅ 池健康"))
     +" · "+tr("监控间隔 ")+(d.check_interval||"-")
-    +" · "+tr("补号模式 ")+(d.register_mode||"-")
     +" · "+poolFullTime(d.server_time);
   const stats=[
     [tr("可用账号"), avail+" / "+min, unhealthy?"err":"ok"],
@@ -2529,7 +2555,6 @@ function poolRender(d){
     [tr("已耗尽"), String(accts.filter(a=>a.state==="exhausted").length), "warn"],
     [tr("隔离中"), String(accts.filter(a=>a.state==="quarantined"||(a.quarantine_until&&new Date(a.quarantine_until)>new Date())).length), "warn"],
     [tr("已禁用"), String(accts.filter(a=>a.disabled).length), ""],
-    [tr("注册额度"), (d.register&&(d.register.used_last_hr+"/"+d.register.max_per_hour))||"-", ""],
     [tr("上次检查"), poolShortTime(d.last_check), ""],
   ];
   document.getElementById("poolStats").innerHTML = stats.map(([k,v,cls])=>
@@ -2543,7 +2568,7 @@ function poolRender(d){
     fill.style.background = unhealthy? "var(--err)" : (avail>min?"var(--ok)":"var(--warn)");
     document.getElementById("poolBarLabel").textContent=avail+" / "+min;
     document.getElementById("poolBarMeta").textContent = unhealthy
-      ? tr("缺口 ")+(min-avail)+tr(" 个账号：插件在账号池内换号后，会按 register_mode 打开注册会话。")
+      ? tr("缺口 ")+(min-avail)+tr(" 个账号：请从面板导入凭据补足。插件不会自己创建账号。")
       : tr("满足最低可用保证：请求在池内失败可自动换号，不依赖宿主重试。");
   } else { bar.style.display="none" }
   document.getElementById("poolWhen").textContent = d.last_check? (tr("上次检查 ")+poolShortTime(d.last_check)) : "";
@@ -2573,46 +2598,6 @@ function poolRender(d){
     }).join("");
   }
 
-  // 注册会话
-  const reg=d.register||{};
-  const card=document.getElementById("poolRegCard");
-  const sess=reg.sessions||[];
-  const hist=reg.history||[];
-  if(!sess.length&&!hist.length){
-    card.style.display="none";
-  } else {
-    card.style.display="block";
-    document.getElementById("poolRegMeta").textContent =
-      (reg.enabled?tr("自动补号已开启"):tr("自动补号已关闭"))
-      +" · "+tr("模式 ")+(reg.mode||"-")
-      +" · "+tr("签发区域 ")+(reg.realm||"-")
-      +" · "+tr("超时 ")+(reg.timeout||"-")
-      +" · "+tr("本小时 ")+(reg.used_last_hr||0)+"/"+(reg.max_per_hour||0);
-    document.getElementById("poolRegSessions").innerHTML = sess.length? sess.map(s=>
-      '<div class="pool-reg">'
-      +'<div class="hd"><b>'+esc(s.status)+'</b><span class="pstate">'+esc(s.mode||"")+' · '+esc(s.realm||"")+'</span></div>'
-      +'<div class="meta">'+tr("会话 ")+esc(s.id)+' · '+tr("触发 ")+esc(htmlUnescape(s.trigger||""))
-        +' · '+tr("过期 ")+esc(poolFullTime(s.expires_at))
-        +' · polls '+esc(String(s.polls||0))
-        +(s.uid?(' · uid '+esc(s.uid)):'')
-        +(s.trial?(' · trial '+esc(htmlUnescape(s.trial))):'')
-        +(s.region_fix?(' · region '+esc(htmlUnescape(s.region_fix))):'')
-        +(s.detail?(' · '+esc(htmlUnescape(s.detail))):'')
-        +'</div>'
-      // The host HTML-escapes every string value, so the authorization URL and
-      // its &state= query arrive as &amp;. Decode exactly one pass, then escape
-      // for display: the copy button always copies the decoded URL.
-      +(s.status==="pending"&&s.url?('<code class="url">'+esc(htmlUnescape(s.url))+'</code>'):'')
-      +'<div class="acts">'
-      +(s.status==="pending"&&s.url?('<button type="button" class="sec" onclick="poolCopySession(\''+esc(s.id)+'\')">'+tr("复制链接")+'</button>'
-        +'<button type="button" class="sec" onclick="poolPoll(\''+esc(s.id)+'\',this)">'+tr("检查完成情况")+'</button>'
-        +'<button type="button" class="sec" onclick="poolCancel(\''+esc(s.id)+'\',this)">'+tr("放弃")+'</button>'):'')
-      +'</div></div>').join("") : '<div class="pool-lack">'+tr("暂无注册会话")+'</div>';
-    document.getElementById("poolRegHistory").innerHTML = hist.length
-      ? '<div style="margin-bottom:4px">'+tr("补号历史")+'</div>'+hist.slice().reverse().slice(0,10).map(h=>
-          '<div class="p">'+esc(poolFullTime(h.at))+' · '+esc(h.result||"")+' · '+esc(htmlUnescape(h.detail||""))+'</div>').join("")
-      : "";
-  }
 }
 
 function poolPick(cb,authIndex){
@@ -2623,15 +2608,6 @@ function poolPickedList(){ return [...poolPicked] }
 async function poolCheck(btn){
   await poolLoad(true,btn);
   if(typeof load==="function"){ try{ await load(false); }catch(_){} }
-}
-
-async function poolToggleAuto(on){
-  try{
-    const d=await api("/pool/config",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({auto_register:on})});
-    if(d&&d.error){ toast(tr("设置失败"),"err",d.error); return }
-    toast(on?tr("自动补号已开启 ✅"):tr("自动补号已关闭"),on?"ok":"warn");
-    poolLoad(false);
-  }catch(e){ toast(tr("设置失败"),"err",e.message) }
 }
 
 async function poolSetMin(v){
@@ -2677,69 +2653,8 @@ async function poolReleaseSelected(btn){
   poolLoad(false);
 }
 
-async function poolRegisterStart(btn){
-  busy(btn,true);
-  try{
-    const d=await api("/pool/register",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({force:true})});
-    if(d&&d.error){ toast(tr("注册未启动"),"err",d.error); return }
-    toast(tr("注册会话已创建"),"ok",tr("打开链接完成 Google / GitHub 登录"));
-    if(d&&d.url){ try{ await navigator.clipboard.writeText(htmlUnescape(d.url)) }catch(_){} }
-    poolRegisterRefresh(null);
-  }catch(e){ toast(tr("注册未启动"),"err",e.message) }
-  finally{ busy(btn,false) }
-}
-
-async function poolRegisterRefresh(btn){
-  if(!getKey()) return;
-  if(btn) busy(btn,true);
-  try{
-    const reg=await api("/pool/register");
-    if(lastPool) lastPool.register=reg;
-    poolRender(lastPool||{});
-  }catch(e){ if(btn) toast(tr("刷新失败"),"err",e.message) }
-  finally{ if(btn) busy(btn,false) }
-}
-
-async function poolPoll(id,btn){
-  busy(btn,true);
-  try{
-    const d=await api("/pool/register/poll",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({id})});
-    if(d&&d.error){ toast(tr("检查失败"),"err",d.error); return }
-    if(d.status==="succeeded"){
-      toast(tr("注册成功 ✅"),"ok",(d.nickname||"")+" · "+(d.file||""));
-      if(typeof load==="function"){ try{ await load(false) }catch(_){} }
-    } else if(d.status==="pending"){
-      toast(tr("浏览器登录尚未完成"),"warn",tr("完成 Google / GitHub 登录后会自动落盘"));
-    } else {
-      toast(tr("会话 ")+d.status, d.status==="failed"?"err":"warn", d.detail||"");
-    }
-    poolLoad(false);
-  }catch(e){ toast(tr("检查失败"),"err",e.message) }
-  finally{ busy(btn,false) }
-}
-
-async function poolCancel(id,btn){
-  busy(btn,true);
-  try{
-    await api("/pool/register/cancel",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({id})});
-    toast(tr("已放弃会话"),"warn");
-    poolLoad(false);
-  }catch(e){ toast(tr("操作失败"),"err",e.message) }
-  finally{ busy(btn,false) }
-}
-
 function poolCopy(text){
   try{ navigator.clipboard.writeText(text); toast(tr("已复制"),"ok") }catch(e){ toast(tr("复制失败"),"warn",text) }
-}
-
-// Copy the authorization URL of one session. The URL is read from the most
-// recent /pool/register payload and htmlUnescape'd (the host escapes response
-// strings), so the copied link keeps a working &state= parameter.
-function poolCopySession(id){
-  const reg=(lastPool&&lastPool.register)||{};
-  const s=(reg.sessions||[]).find(x=>x.id===id);
-  if(!s||!s.url){ toast(tr("链接已失效"),"warn"); return }
-  poolCopy(htmlUnescape(s.url));
 }
 
 function openImportModal(){
@@ -2781,7 +2696,6 @@ let usageAccounts=[];
 let usageRecords=[];
 let lastUsageData=null;
 let lastUsageError="";
-let usageTimer=null;
 let usageKeyOk=null;
 
 function fmtCred(v){const n=Number(v)||0;return n?""+Math.round(n*1000)/1000:"0"}
@@ -2991,9 +2905,6 @@ async function initUsage(){
 // 一旦各自为政，就会出现「徽章说繁忙、用量表说正常」这种自相矛盾的画面。
 // 取值是封闭的几档：localStorage 里手写的 0 或别的数字一律回落默认，
 // 因为「不刷新」和「疯狂刷新」都不是用户想要的，而它直接驱动 setInterval。
-const POLL_KEY="workbuddy-poll-ms";
-const POLL_CHOICES=[5000,15000,30000,60000,300000];
-const POLL_DEFAULT=5000;
 function pollMs(){
   let v=parseInt(localStorage.getItem(POLL_KEY)||"",10);
   if(!POLL_CHOICES.includes(v)) v=POLL_DEFAULT;
@@ -3027,6 +2938,11 @@ applyPanelLanguage(false);
 
 /* Start theme sync watcher (parent MutationObserver + standalone prefers-color-scheme listener). */
 if(window.__wbThemeSync)window.__wbThemeSync();
+/* Pollers last: restartPollers() reads POLL_* / usageTimer / _concTimer, and
+   calling it before their declarations throw on the temporal dead zone and
+   abort the rest of this script (the pool section then never renders). */
+restartPollers();
+(function(){const el=document.getElementById("pollSel");if(el)el.value=String(pollMs());})();
 if(getKey()){
   load(false);
 }else{
@@ -3404,7 +3320,13 @@ function mmDiagFacts(realm){
     [tr("上游域名"), realm==="cn"?"copilot.tencent.com":"codebuddy.ai / workbuddy.ai"],
     [tr("拉取账号"), c.fetch_account||"—"],
     [tr("拉取时间"), c.fetched_at||"—"],
-    [tr("目录模型数"), String(c.catalog!=null?c.catalog:rows.length)],
+    // "catalog" counts rows that only exist in the archived catalog (upstream no
+    // longer lists them), so labelling it 目录模型数 read as "6 models" next to a
+    // 68-row table. Three separate facts instead: what upstream served, how many
+    // catalog-only rows are kept as fallback, and what the table shows.
+    [tr("上游模型数"), String(c.upstream!=null?c.upstream:rows.length)],
+    [tr("目录兜底模型数"), String(c.catalog!=null?c.catalog:0)],
+    [tr("显示的模型数"), String(rows.length)],
     [tr("启用的模型数"), String(enabled)],
     [tr("免费模型数"), String(c.free!=null?c.free:"—")],
     [tr("有倍率的模型"), String(withCredits)],

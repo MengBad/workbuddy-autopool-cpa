@@ -3,6 +3,41 @@
 本分支在 [`zidanefaqih/codebuddy-intl-cpa`](https://github.com/zidanefaqih/codebuddy-intl-cpa) v0.10.0 基础上继续维护，
 从 v0.12.0 起由本仓库（[`MengBad/workbuddy-autopool-cpa`](https://github.com/MengBad/workbuddy-autopool-cpa)）发布。
 
+## v0.14.1 (2026-11-12) — 面板修复与发布准备
+
+首个在 [`MengBad/workbuddy-autopool-cpa`](https://github.com/MengBad/workbuddy-autopool-cpa)
+上发布的版本。功能与 v0.14.0 相同，修掉了三个面板缺陷并把仓库补成可长期维护的状态。
+
+### 面板
+
+- **账号池区块永远停在「加载中…」**。根因是脚本里的 temporal dead zone：
+  `load()` 在脚本末尾执行，而 `lastPool` / `POLL_KEY` / `_concTimer` 等声明写在它之后，
+  `restartPollers()` 在顶层被提前调用时抛 `Cannot access 'X' before initialization`，
+  整个脚本中断，池区块和用量表都渲染不出来。修法是把状态声明前移、
+  把 `restartPollers()` 的引导挪到脚本末尾（在所有声明之后），而不是加 try/catch 掩盖。
+- **诊断栏「目录模型数 6」与 68 行表格自相矛盾**。`catalog` 统计的是只存在于
+  归档目录里、上游已不再下发的兜底行，标成「目录模型数」会被读成「一共只有 6 个模型」。
+  拆成三个独立事实：**上游模型数 / 目录兜底模型数 / 显示的模型数**。
+- **注册相关的残留 UI 全部移除**。`自动补号` 开关、`立即注册国际账号`、注册会话卡
+  和它们对应的 `poolRegister*` / `poolToggleAuto` / `poolCopySession` 函数在 0.12
+  就已经没有后端，只是面板还在显示按钮、点了回 404。现在账号池区块只剩
+  最低可用选择、隔离/解除、刷新，以及一个跳转到导入弹窗的「＋ 导入账号」。
+  池子不够时的文案改成「请从面板导入凭据补足。插件不会自己创建账号。」——
+  这句话现在是真的。
+
+### 仓库
+
+- 新增 `scripts/`：`check-registry.py`（registry 与 VERSION 一致性，进 CI）、
+  `compare-cache-traces.py` / `study-cache-misses.py` / `cache_trace_analysis.py`
+  （`docs/cache-tracing.md` 一直在让人跑这几个脚本，但它们不在仓库里）、
+  `check-darwin-dylib.py`。
+- `docs/architecture.md` 的文件职责表重写为真实的 42 个文件分组
+  （旧表还写着 `executor.go` / `scheduler.go` / `auth_parse.go`，这些文件 0.12 就不存在了）。
+- `docs/development.md`、`docs/release-checklist.md` 按本仓库的真实布局重写
+  （根目录就是插件包、单 `main` 分支 + tag、CI 实际跑的步骤）。
+- `CONTRIBUTING.md`、`SECURITY.md`、`logo.png`、README 徽章与目录索引。
+
+
 ## v0.14.0 (2026-11-12) — 命名体系
 
 **默认前缀改为 `cnwb/` 与 `intlwb/`**，两个区域都默认启用。
