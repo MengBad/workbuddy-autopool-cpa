@@ -21,6 +21,14 @@ import (
 	"github.com/router-for-me/CLIProxyAPI/v7/sdk/pluginapi"
 )
 
+// The shared fallback client's own state. It lives here rather than beside the
+// rest of the config because sharedHTTPClient() is the only thing that touches
+// it, and splitting the pair across files is how it went missing once already.
+var (
+	httpClientOnce sync.Once
+	sharedClient   *http.Client
+)
+
 // sharedHTTPClient is the fallback HTTP client used ONLY when the host HTTP
 // bridge is unavailable (unit tests, or hosts older than v7.2.x without
 // host.http.* RPC). All production upstream calls should route via hostHTTPDo

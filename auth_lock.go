@@ -1,3 +1,5 @@
+// Per-account lock set: serialises credential mutations for one account so a
+// refresh, a check-in and a save cannot interleave.
 package main
 
 import (

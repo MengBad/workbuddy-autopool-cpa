@@ -1,28 +1,34 @@
-# G16 · Package layout note
+# Package layout
 
-## Decision (2026-07-23)
+## The constraint
 
-**No `internal/` package split** for the CPA c-shared plugin.
+`-buildmode=c-shared` requires `package main` with the exported C ABI entry
+points in the **same package**. Go does not allow one package to span
+directories, so every `.go` file of this plugin lives in the repository root.
+That is not sloppiness — moving `executor.go` into `internal/executor/` would
+mean re-exporting it across a package boundary, which for a c-shared plugin
+buys nothing and breaks `//export`.
 
-Reasons:
+## How the root is kept navigable
 
-1. `-buildmode=c-shared` requires `package main` with exported C ABI entry
-   points in the same main package.
-2. Splitting into `internal/*` forces awkward re-exports or multi-package
-   cgo glue for little gain.
-3. Current modularization already uses **same-package multi-file**
-   (42 non-test files, one responsibility each):
-   - `main.go` — ABI, dispatch, registration, region constants
-   - `oauth.go` — login flow; `payload.go` / `stream.go` — executor data plane
-   - `management.go` — routes and auth; `panel.go` + `panel.html` — UI
-   - `pool.go` — account pool; `models_config.go` — Model Manager
-   - `*_test.go` — unit tests (52 files)
+- **One responsibility per file.** 50 source files, largest is
+  `models_config.go` (~1.8k lines, the Model Manager backend). Everything else
+  is well under 1k.
+- **`main.go` is only the boundary.** It is the single file that imports `"C"`
+  and therefore the only place the host function-pointer table can live. It
+  holds the ABI exports, `hostCall`, `handleMethod` and `writeResponse` — no
+  business logic. It went from 1154 lines to ~230 in the v0.15 split.
+- **Every file starts with a one-line purpose comment**, so `ls` plus the first
+  line of each file is a table of contents.
+- **Every `*_test.go` is named after the file it exercises** (with an optional
+  behaviour suffix). A source file with no matching test file is visibly
+  untested.
+- **Non-Go assets live in their own directories**: `web/` (the embedded panel),
+  `docs/`, `scripts/`.
 
-## Done instead of G16
+## What was rejected
 
-- New domain files (`pool.go`, `promotions.go`, `queue.go`, `models_test_probe.go`)
-  rather than growing only `main.go`
-- Document boundaries in README
-
-Full DDD `internal/` (as in cli-smart-router) is frozen unless CPA adds a
-non-c-shared plugin packaging model.
+- `internal/*` package split: see above.
+- Moving files into `cmd/` / `pkg/`: same package-boundary problem.
+- A `//go:generate` that copies sources around at build time: two copies of
+  every file, and the copy is what the compiler sees.

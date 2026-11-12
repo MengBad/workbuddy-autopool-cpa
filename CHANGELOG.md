@@ -3,6 +3,57 @@
 本分支在 [`zidanefaqih/codebuddy-intl-cpa`](https://github.com/zidanefaqih/codebuddy-intl-cpa) v0.10.0 基础上继续维护，
 从 v0.12.0 起由本仓库（[`MengBad/workbuddy-autopool-cpa`](https://github.com/MengBad/workbuddy-autopool-cpa)）发布。
 
+## v0.15.0 (2026-11-13) — 仓库整理
+
+只做整理，不改行为。功能与 v0.14.3 完全一致。
+
+### `main.go` 从 1154 行拆到 230 行
+
+它混了十个职责：C ABI、宿主 RPC、方法分发、注册表、模型缓存、凭证结构、
+会话 ID、上游请求头、AuthData 转换、执行器。按职责拆成 9 个文件后，
+`main.go` 只剩它必须留下的部分——因为它是唯一 `import "C"` 的文件，
+宿主函数指针表和 `writeResponse` 只能待在那里。
+
+| 新文件 | 内容 |
+|---|---|
+| `config.go` | 上游基址、OAuth 签发端点集、登录状态清理协程 |
+| `registration.go` | 能力注册表、信封类型、构建期标识（`version` 等） |
+| `envelope.go` | `okEnvelope` / `errorEnvelope` / `errorEnvelopeFromError` |
+| `models_cache.go` | 动态模型缓存 + 别名表 |
+| `stored.go` | 磁盘凭证结构与 `parseStored` |
+| `conversation.go` | `stableConversationID` / `randomHex` |
+| `upstream_headers.go` | 逐 realm 的客户端身份头 |
+| `auth_data.go` | 凭证 → `pluginapi.AuthData` |
+| `executor.go` | 执行器入口、流式收集、failover 回调 |
+
+### 测试文件命名
+
+24 个测试文件的文件名对不上任何源文件（`aggregate_test.go`、`sanitize_test.go`、
+`finish_error_test.go`…），读起来像一堆互不相关的断言。全部改成「被测文件 + 行为后缀」，
+现在 `go test ./...` 本身就是一张覆盖地图。52 → 60 个测试文件。
+
+### 删掉 6 个从未被调用的函数
+
+`endpointModelsFor`、`poolSaveAuthFile`、`poolClaimTrial`、`poolFetchCredits`、
+`parseBoolDefault`、`promotionsFresh`。它们是 0.12 移除自动注册和 seam 改造后的残留：
+全仓库各只出现一次（自己的声明）。`go vet` 不报未使用的函数，所以一直没被发现。
+
+### 补测试时抓到的两个真实 bug
+
+1. **排队位次把错误码当成了位次**。`parseQueueRejection` 用正则在整个响应体里找数字，
+   而上游的 `"code":6020` 就在同一个 body 里，于是「没有位次」的响应被渲染成
+   「你排在第 6020 位」——一个上游从未给出的数字。现在先剥掉业务码再匹配，
+   并补了 `queue_test.go` 守住这条。
+2. **`main.go` 里 `version` 常量与 `VERSION` 文件不同步**（已在 0.14.2 修，这里记录成因）。
+
+### 结构
+
+- `panel.html` → `web/panel.html`（`go:embed web/panel.html`）。
+- `scripts/__pycache__` 已删除并加入 `.gitignore`（之前漏掉了）。
+- `docs/architecture.md` 的文件职责表按真实的 50 个文件重写；
+  `docs/package-layout.md` 重写，说明为什么根目录平铺是 c-shared 的硬约束而不是懒。
+- 每个源文件第一行都是职责说明，`head -1 *.go` 即目录。
+
 ## v0.14.3 (2026-11-12) — 表头收尾
 
 v0.14.2 删掉了重复的静态表头，但那份静态标记是**国内版唯一**的表头——国际版在

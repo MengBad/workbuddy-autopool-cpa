@@ -35,6 +35,7 @@
 | [配置](#配置) | 完整 `config.yaml` 与环境变量 |
 | [管理 API](#管理-api) | 全部端点 |
 | [面板](#面板) | 面板分区与交互 |
+| [代码结构](#代码结构) | 50 个源文件为什么都在根目录 |
 | [验证记录](#验证记录2026-11-12线上实测) | 线上实测数字 |
 | [已知限制](#已知限制) | 上游限制与刻意的取舍 |
 | [致谢与来源](#致谢与来源) | 上游与参照项目 |
@@ -341,6 +342,27 @@ plugins:
 
 ---
 
+## 代码结构
+
+50 个源文件 + 60 个测试文件，**全部在仓库根目录**。这不是没整理：`-buildmode=c-shared`
+要求导出的 C ABI 入口和所有代码在同一个 package，而 Go 不允许一个 package 跨目录。
+拆成 `internal/executor/` 就得为跨包重新导出，对 c-shared 插件没有任何好处。
+
+能整理的部分都整理了：
+
+- **一个文件一个职责**，每个文件第一行就是它的职责说明（`head -1 *.go` 就是目录）。
+- **`main.go` 只留边界**：它是唯一 `import "C"` 的文件，所以宿主函数指针表只能在那里；
+  里面只有 ABI 导出、`hostCall`、`handleMethod`、`writeResponse`，没有业务逻辑。
+  拆分后从 1154 行降到约 230 行。
+- **每个 `*_test.go` 都以被测源文件命名**（可带行为后缀，如 `retry_finish_error_test.go`）。
+  没有同名测试的源文件，一眼就能看出来。
+- **非 Go 资源各归其位**：`web/`（面板）、`docs/`、`scripts/`。
+
+详见 [`docs/package-layout.md`](docs/package-layout.md) 与
+[`docs/architecture.md`](docs/architecture.md) 的文件职责表。
+
+---
+
 ## 验证记录（2026-11-12，线上实测）
 
 ```
@@ -352,7 +374,7 @@ busy_at    : 2026-11-12T14:29:13Z（采集成功）
              hy3     限时免费  2026-07-06 — 2026-11-16
 ```
 
-`gofmt -l` 无输出，`go vet` 干净，`go test -race -count=1 ./...` 全绿（52 个测试文件），
+`gofmt -l` 无输出，`go vet` 干净，`go test -race -count=1 ./...` 全绿（60 个测试文件），
 `CGO_ENABLED=1 go build -buildmode=c-shared` 通过，CI 在 GitHub 上同样四步全绿。
 
 ---

@@ -36,11 +36,22 @@ for p in plugins:
 # main.go's version const is what `make build` stamps into a local binary (CI
 # overrides it with -ldflags -X main.version=<tag>). Letting it drift means a
 # hand-built plugin reports a version that is not the one in VERSION.
-main_go = (root / "main.go").read_text(encoding="utf-8")
-m = re.search(r'^\s*version\s*=\s*"([^"]+)"', main_go, re.M)
-if not m:
-    sys.exit("main.go: version constant not found")
-if m.group(1) != version:
-    sys.exit(f"main.go version {m.group(1)} != VERSION {version}")
+# The version constant can live in any source file (it moved from main.go to
+# registration.go in the v0.15 split), so scan them all rather than pin a path
+# that will rot again on the next move.
+found = {}
+for src in sorted(root.glob("*.go")):
+    if src.name.endswith("_test.go"):
+        continue
+    m = re.search(r'^\s*version\s*=\s*"([^"]+)"', src.read_text(encoding="utf-8"), re.M)
+    if m:
+        found[src.name] = m.group(1)
+if not found:
+    sys.exit("no version constant found in any *.go")
+if len(found) > 1:
+    sys.exit(f"version constant declared in more than one file: {found}")
+src_name, ver = next(iter(found.items()))
+if ver != version:
+    sys.exit(f"{src_name} version {ver} != VERSION {version}")
 
-print(f"registry.json ok: {plugins[0]['id']} v{version} (main.go agrees)")
+print(f"registry.json ok: {plugins[0]['id']} v{version} ({src_name} agrees)")

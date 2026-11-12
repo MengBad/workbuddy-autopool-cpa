@@ -131,13 +131,6 @@ func promotionsFor(realm string) []upstreamPromotion {
 	return promotions.byRealm[realm]
 }
 
-func promotionsFresh(realm string) bool {
-	promotions.mu.RLock()
-	defer promotions.mu.RUnlock()
-	at, ok := promotions.at[realm]
-	return ok && time.Since(at) < promotionCacheTTL
-}
-
 // parseClock turns "23:00" or "7:50" into minute-of-day.
 func parseClock(s string) (int, bool) {
 	s = strings.TrimSpace(s)

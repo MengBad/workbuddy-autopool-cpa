@@ -53,12 +53,30 @@ func isQueueRejection(body string) bool {
 		strings.Contains(lower, "in queue")
 }
 
+// queueMessageText returns the human-readable part of a rejection with the
+// business code removed, so the position regex cannot match the code itself.
+func queueMessageText(body, code string) string {
+	text := body
+	if code != "" {
+		text = strings.ReplaceAll(text, `"code":`+code, "")
+		text = strings.ReplaceAll(text, `"code": "`+code+`"`, "")
+		text = strings.ReplaceAll(text, `"code":"`+code+`"`, "")
+	}
+	if m := upstreamCodeRe.FindStringSubmatch(text); len(m) == 2 {
+		text = strings.ReplaceAll(text, m[0], "")
+	}
+	return text
+}
+
 // parseQueueRejection builds the operator-facing description. When upstream
 // gives no position we say so instead of inventing a number.
 func parseQueueRejection(body string) queueRejection {
 	code := upstreamErrorCode(body)
 	out := queueRejection{Code: code}
-	if m := queuePositionRe.FindStringSubmatch(body); len(m) > 1 {
+	// Scan the message only, and only after removing the business code. The code
+	// itself is a bare integer in the same body, so scanning the whole body made
+	// "6020" read as "you are 6020th in line" — a number the upstream never gave.
+	if m := queuePositionRe.FindStringSubmatch(queueMessageText(body, code)); len(m) > 1 {
 		if v, ok := parsePositiveInt64(m[1]); ok {
 			out.Position = v
 		}

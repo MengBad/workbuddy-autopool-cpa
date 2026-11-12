@@ -396,5 +396,5 @@ func servePanel(sub string) []byte {
 	return []byte(body)
 }
 
-//go:embed panel.html
+//go:embed web/panel.html
 var panelHTML []byte

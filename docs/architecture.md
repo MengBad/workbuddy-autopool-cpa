@@ -16,42 +16,59 @@ driven via the `pluginabi` RPC interface.
 
 ## File map (by responsibility)
 
-42 non-test files, ~27.9k lines. One responsibility per file.
+50 non-test files (~18.1k lines) and 60 test files (~10.8k lines), one
+responsibility per file. Go requires every file of a `c-shared` package to sit
+in the same directory, so the split is by file, not by folder.
 
 ### Entry, ABI, config
 
 | File | Responsibility |
 |---|---|
-| `main.go` | C ABI exports, `handleMethod` dispatch, `wbRegistration` (capabilities + ConfigField), metadata, region constants |
-| `usage_config.go` | decode plugin config from `config_yaml` on every register/reconfigure; resolve the CPAMP usage report URL/key; lock-protected config snapshot |
+| `main.go` | the only file that imports `"C"`: C ABI exports, the host function-pointer table, `hostCall`, `handleMethod` dispatch, `writeResponse` |
+| `config.go` | upstream bases, the per-realm OAuth issuer endpoint set, the login-state janitor |
+| `registration.go` | capability envelope CPA reads at load, the envelope types, build-time identity vars (`version`, display name) |
+| `envelope.go` | `okEnvelope` / `errorEnvelope` / `errorEnvelopeFromError` |
+| `usage_config.go` | decode plugin config from `config_yaml`; resolve the CPAMP report URL/key |
 | `update_check.go` | `GET /update/check`: release registry vs build version, 6h cache, silent fail, "skip this version" |
 | `redact.go` | `redactSecrets` — every string that can reach a log/error/CPAMP body goes through it |
+
+### Credential and transport primitives
+
+| File | Responsibility |
+|---|---|
+| `stored.go` | the on-disk credential shape (nested and flat) and `parseStored` |
+| `auth_data.go` | stored credential → `pluginapi.AuthData`, preserving unknown fields and the host file name |
+| `upstream_headers.go` | the client-identity headers the gateway validates in addition to the bearer token (`11128`), resolved per realm |
+| `conversation.go` | `stableConversationID` (hash of the conversation *prefix* only) and `randomHex` |
+| `host_bridge.go` | every upstream HTTP call through the CPA host bridge; `*Direct` variants are the test-only fallback |
 
 ### Model surface
 
 | File | Responsibility |
 |---|---|
 | `models.go` | ModelProvider: static + per-auth lists, dynamic discovery, alias reverse resolution, `oauth-excluded-models` |
-| `models_config.go` | Model Manager backend: catalog (`modelDef`), per-realm settings, model rows with multiplier / promo / busy / efforts / budget |
-| `models_integrate.go` | glue: upstream refresh fan-out, prefix↔realm resolution (`mmDefaultPrefix`), legacy prefix handling, collision validation |
-| `promotions.go` | `modelPromotions` parsing + time-window evaluation; per-model busy levels (`/v2/chat/busy`, 3-min TTL, CN only) |
-| `models_test_probe.go` | `POST /models/test`: one real ~25k-token probe, classify failure, parse the reset instant out of the upstream message |
+| `models_cache.go` | the dynamic model cache and the alias table |
+| `models_config.go` | Model Manager backend: catalog, per-realm settings, model rows (multiplier / promo / busy / efforts / budget) |
+| `models_integrate.go` | glue: upstream refresh fan-out, prefix↔realm resolution, legacy prefix handling, collision validation |
+| `promotions.go` | `modelPromotions` parsing + time-window evaluation; per-model busy levels (CN only) |
+| `models_test_probe.go` | `POST /models/test`: one real ~25k-token probe, classify failure, parse the reset instant |
 | `account_tier.go` | plan tier (free vs paid) for model gating (`11158`) |
 
 ### Executor and data plane
 
 | File | Responsibility |
 |---|---|
+| `executor.go` | `handleExecExecute` / `handleExecStream`, the synchronous stream collector, the post-failover hook |
 | `payload.go` | `prepareUpstreamBody` single JSON pass: force stream, normalize tools, rewrite system, ensure system message, rewrite model, inject chosen effort |
-| `stream.go` | upstream SSE data plane: emit/close, pump with failover, synchronous collect, frame re-shaping |
-| `sse_reader.go` | bounded SSE line scanner over the host stream reader |
-| `retry.go` | executor-side failover loop: 429 / 6004 / 14018 → retry the same request on another enabled account |
+| `stream.go` | upstream SSE data plane: emit/close, pump with failover, frame re-shaping |
+| `sse_reader.go` | SSE frame reader: keeps completion chunks, drops event names / comments / metadata / scalar progress |
+| `request_roles.go` | restores Responses API `developer` messages that CPA rewrote to `user` |
+| `retry.go` | executor-side failover loop: 429 / 6004 / 14018 → retry on another enabled account |
 | `failover.go` | non-destructive multi-account cooldowns keyed by account |
-| `queue.go` | `6020/6021/6022` queue rejections → operator-readable text; queue never triggers an account swap |
-| `client_identity.go` | per-realm client identity headers (`11128` when missing) |
+| `queue.go` | `6020/6021/6022` queue rejections → operator-readable text; a queue never triggers an account swap |
+| `client_identity.go` | per-realm client identity constants |
 | `attempt_admission.go` | per-account concurrency bound without a local waiting queue |
 | `session_affinity.go` | soft session affinity: prefer the last executing account, move to a free same-realm peer |
-| `request_roles.go` | request role classification (main / compaction / title) |
 | `request_usage.go` | per-request JSONL credit+token log and its query surface |
 | `cache_trace.go` | content-free request fingerprints alongside accounting |
 
@@ -60,12 +77,12 @@ driven via the `pluginabi` RPC interface.
 | File | Responsibility |
 |---|---|
 | `pool.go` | account pool: states, credits, quarantine, minimum-available guarantee, persistence keyed by UID |
-| `pool_handlers.go` | `/pool*` management endpoints (kept separate so the feature is reviewable in one place) |
+| `pool_handlers.go` | `/pool*` management endpoints (separate so the feature is reviewable in one place) |
 | `lifecycle.go` | credit-driven auth lifecycle: CN disable/re-enable, Global delete, unknown credits → no-op |
 | `policy.go` | pure decision layer for lifecycle actions (no I/O) |
 | `authfile.go` | auth file naming, UID sanitization (path-traversal defense), host.auth read/write/delete |
-| `host_auth.go` | host auth-store RPC wrappers (`host.auth.list/get/get_bundle`) |
-| `auth_lock.go` | per-account lock set |
+| `host_auth.go` | host auth-store RPC wrappers |
+| `auth_lock.go` | per-account lock set: serialises credential mutations |
 | `account_warning.go` | risk-control warnings (`11140`) surfaced separately from credit exhaustion |
 | `checkin.go` | CN daily check-in: manual endpoint, 09:00/21:00 scheduler, per-account mutex |
 | `dailybonus.go` | Global daily 30-credit reward via the growth centre (idempotent per account per day) |
@@ -73,18 +90,23 @@ driven via the `pluginabi` RPC interface.
 | `billing.go` | upstream billing surface: check-in status, user resource, payment type, perform-* wrappers |
 | `credits_handler.go` | import / check-in toggle / trial / select-auth / credits query endpoints |
 | `cache.go` | per-account plan/checkin/credits cache + singleflight |
-| `expiry` (in `authfile.go`/`billing.go`) | token expiry decisions |
 
-### OAuth, transport, panel
+### OAuth, management, panel
 
 | File | Responsibility |
 |---|---|
 | `oauth.go` | browser-driven OAuth login (CN + Global), state polling, token refresh, isolated cookie jars |
-| `host_bridge.go` | every upstream HTTP call through the CPA host bridge; `*Direct` variants are the test-only fallback |
 | `usage.go` | UsagePlugin: forward the canonical record to CPAMP |
 | `management.go` | management route table, plugin-layer auth (constant-time Bearer + per-IP token bucket) |
 | `panel.go` | `buildDashboardEx`, credit summarisation, panel resource serving |
-| `panel.html` | the embedded panel (~3.9k lines, `go:embed`) |
+| `web/panel.html` | the embedded panel (`go:embed web/panel.html`) |
+
+### Test layout
+
+Every `*_test.go` is named after the file it exercises, with an optional
+behaviour suffix (`billing_credits_test.go`, `retry_finish_error_test.go`).
+`go test ./...` therefore reads as a coverage map: a source file with no
+matching test file is a file whose behaviour is asserted only indirectly.
 
 ## Data flow
 
@@ -124,7 +146,7 @@ schedulerLoop → runAutoCheckin (sem=4 concurrent)
 ### Dashboard load
 
 ```
-panel.html → /v0/management/plugins/workbuddy/accounts
+web/panel.html → /v0/management/plugins/workbuddy/accounts
   → handleManagement (auth + ratelimit)
   → buildDashboardEx (concurrent cachedAccountDetails per account, sem=4)
       → accountDetailFlight singleflight dedups concurrent fetches

@@ -28,7 +28,7 @@ go test -cover ./...            # 覆盖率
 go test -coverprofile=coverage.out ./... && go tool cover -html=coverage.out
 ```
 
-当前 52 个测试文件，覆盖的关键路径：
+当前 60 个测试文件（每个都以被测源文件命名），覆盖的关键路径：
 
 - 缓存合并（credits / plan / checkin 在快速路径上不被清空）
 - alias 反解（客户端 alias → 上游 model id）与新旧前缀（`cnwb/` `intlwb/` `cn/` `cb/`）
@@ -105,6 +105,8 @@ CI（`.github/workflows/ci.yml`）在 tag 上产出
 ## 代码约定
 
 - 一个文件一个职责，单文件 ≤ 1500 行（`models_config.go` 是已知的唯一例外）
+- 新增源文件必须同名字带 `_test.go`；`main.go` 只放 C ABI 边界，不放业务逻辑
+- 非 Go 资源放各自的目录：`web/`（面板）、`docs/`、`scripts/`
 - 注释用英文（社区惯例）；**面向用户的字符串可以是中文**
 - 不轻易加依赖：`go.mod` 目前只有 CPA SDK + 三个间接依赖
 - 线格式神圣：`pluginapi` / `pluginabi` 的字段名不改

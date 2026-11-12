@@ -1,3 +1,5 @@
+// Soft session affinity: a conversation prefers its last executing account and
+// moves to a free same-realm peer only when that account has no slot.
 package main
 
 // Soft session affinity is separate from physical-account admission. A session

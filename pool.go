@@ -92,27 +92,6 @@ func poolGetAuthBundle(authIndex string) (*storedAuth, *hostAuthPhysical, error)
 	return fn(authIndex)
 }
 
-func poolSaveAuthFile(name string, raw []byte) (pluginapi.HostAuthSaveResponse, error) {
-	poolSeamsMu.RLock()
-	fn := poolAuthSaveSource
-	poolSeamsMu.RUnlock()
-	return fn(name, raw)
-}
-
-func poolClaimTrial(sa *storedAuth) (map[string]any, error) {
-	poolSeamsMu.RLock()
-	fn := poolTrialSource
-	poolSeamsMu.RUnlock()
-	return fn(sa)
-}
-
-func poolFetchCredits(sa *storedAuth) (*creditsSummary, error) {
-	poolSeamsMu.RLock()
-	fn := poolCreditsSource
-	poolSeamsMu.RUnlock()
-	return fn(sa)
-}
-
 // poolConfigYAML extracts the plugin config YAML out of a lifecycle request.
 // The host may hand the subtree either as a plain string or — because the wire
 // type is []byte and encoding/json base64-encodes byte slices — as base64.
@@ -1164,16 +1143,6 @@ func configurePool(raw []byte) {
 		guardLogf("pool: check interval changed to %s", cfg.CheckInterval)
 	}
 	ensurePoolMonitor()
-}
-
-func parseBoolDefault(s string, def bool) bool {
-	switch strings.ToLower(strings.TrimSpace(s)) {
-	case "true", "1", "yes", "on":
-		return true
-	case "false", "0", "no", "off":
-		return false
-	}
-	return def
 }
 
 func parsePositiveInt(s string) (int, bool) {

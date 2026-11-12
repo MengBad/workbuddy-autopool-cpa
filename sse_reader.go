@@ -1,3 +1,6 @@
+// SSE frame reader: turns an upstream byte stream into completion chunks,
+// dropping event names, comments, metadata and scalar progress notifications
+// that the downstream translators would misread as chunks.
 package main
 
 import (

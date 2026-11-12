@@ -1,3 +1,5 @@
+// Request role recovery: CPA rewrites Responses API developer messages to
+// user messages; this restores them from the raw client request.
 package main
 
 import (
