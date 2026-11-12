@@ -3,6 +3,15 @@
 本分支在 [`zidanefaqih/codebuddy-intl-cpa`](https://github.com/zidanefaqih/codebuddy-intl-cpa) v0.10.0 基础上继续维护，
 从 v0.12.0 起由本仓库（[`MengBad/workbuddy-autopool-cpa`](https://github.com/MengBad/workbuddy-autopool-cpa)）发布。
 
+## v0.14.3 (2026-11-12) — 表头收尾
+
+v0.14.2 删掉了重复的静态表头，但那份静态标记是**国内版唯一**的表头——国际版在
+`mmRenderModels` 里自己渲染一份，国内版分支没有。结果国内版从「两行表头」变成了
+「没有表头」。
+
+改成两边共用同一个 `mmHeadRow()`，都渲染进 `.mlist` 内部（这样 sticky 才对滚动区生效）。
+教训：删重复元素前要先确认它是不是另一处的唯一来源，只看国际版的截图就会漏掉。
+
 ## v0.14.2 (2026-11-12) — 表头与版本号
 
 - **模型列表出现两行表头**。静态的 `.mheadrow` 写在 `.mlist` 外面，而 `mmRender()`

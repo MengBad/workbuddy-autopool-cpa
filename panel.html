@@ -3353,6 +3353,15 @@ function mmCopyDiag(realm){
   catch(e){ mmToast(tr("复制失败，请手动选择文本"),"warn"); }
 }
 
+// mmHeadRow is the single column header for both realms. It has to live inside
+// .mlist to be sticky against the scrolling list; a second static copy outside
+// it rendered as a duplicate header with a different column template.
+function mmHeadRow(){
+  return '<div class="mrow mhead"><span></span><span>'+tr("模型 ID")+'</span><span>'+tr("名称")+'</span>'
+    +'<span>'+tr("推理档")+'</span><span style="text-align:right">'+tr("上下文")+'</span>'
+    +'<span>'+tr("预算")+'</span><span>'+tr("倍率")+'</span><span>'+tr("测试")+'</span></div>';
+}
+
 function mmRenderModels(realm){
   const st=MM.state[realm], c=MM.cfg[realm];
   const g=realm==="global";
@@ -3380,9 +3389,7 @@ function mmRenderModels(realm){
     // Column header: the row now carries 8 cells (enable / id / name+badges /
   // reasoning / context / budget / price / test). Without a header the two new
   // selectors read as noise.
-  html+='<div class="mrow mhead"><span></span><span>'+tr("模型 ID")+'</span><span>'+tr("名称")+'</span>'
-    +'<span>'+tr("推理档")+'</span><span style="text-align:right">'+tr("上下文")+'</span>'
-    +'<span>'+tr("预算")+'</span><span>'+tr("倍率")+'</span><span>'+tr("测试")+'</span></div>';
+  html+=mmHeadRow();
   const cust=pick(m=>m.custom);
     const sec=(rows,title,opts)=>{if(!rows.length)return;html+=mmSection(emitRows(rows),title,null,rows.length,opts&&opts.style);};
     // 1) Free — x0.00 paling atas
@@ -3413,6 +3420,7 @@ function mmRenderModels(realm){
     const utils=pick(m=>m.util);
     const stale=pick(m=>m.stale&&!m.custom);
     const cust=pick(m=>m.custom);
+    html+=mmHeadRow();
     const sec=(rows,title,opts)=>{if(!rows.length)return;html+=mmSection(emitRows(rows),title,null,rows.length,opts&&opts.style);};
     sec(free,tr("免费 — 倍率 x0.00（完整别名在下面各 vendor 分区）"),{style:"background:var(--ok-soft)"});
     sec(tiers,tr("Tier 别名（route）"));
