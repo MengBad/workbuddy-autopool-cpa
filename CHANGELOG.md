@@ -3,6 +3,16 @@
 本分支在 [`zidanefaqih/codebuddy-intl-cpa`](https://github.com/zidanefaqih/codebuddy-intl-cpa) v0.10.0 基础上继续维护，
 从 v0.12.0 起由本仓库（[`MengBad/workbuddy-autopool-cpa`](https://github.com/MengBad/workbuddy-autopool-cpa)）发布。
 
+## v0.14.2 (2026-11-12) — 表头与版本号
+
+- **模型列表出现两行表头**。静态的 `.mheadrow` 写在 `.mlist` 外面，而 `mmRender()`
+  每次又在列表内部渲染一份 sticky 表头，于是滚动区里同时存在两个表头、列宽还不同步。
+  删掉静态那份，表头只在列表内渲染一次；同时把最后一列表头的文字补成「测试」
+  （原来是个空 `<span>`，看起来像少了一列）。
+- **`main.go` 的 `version` 常量还是 `0.14.0`**。CI 用 `-ldflags -X main.version=<tag>`
+  覆盖，所以发布出来的二进制是对的，但 `make build` 本地构建会自称 0.14.0，
+  与 `VERSION` 文件不一致。已对齐，`make check-registry` 现在也覆盖这条。
+
 ## v0.14.1 (2026-11-12) — 面板修复与发布准备
 
 首个在 [`MengBad/workbuddy-autopool-cpa`](https://github.com/MengBad/workbuddy-autopool-cpa)

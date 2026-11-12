@@ -290,12 +290,8 @@ button .spin{border-color:var(--on-acc);border-top-color:transparent}
 .searchrow input{flex:1;background:var(--input-bg);border:1px solid var(--border);border-radius:8px;color:var(--fg);padding:8px 12px;font-size:13px;outline:none;min-width:0}
 .searchrow input:focus{border-color:var(--acc)}
 .searchrow .counter{color:var(--mut);font-size:12.5px;align-self:center;white-space:nowrap}
-/* 表头必须与 .mrow 完全同列，否则两个选择器看起来像错位的怪物 */
-.mheadrow{display:grid;grid-template-columns:30px minmax(120px,1.5fr) minmax(140px,1.3fr) 88px 74px 74px 80px 62px;
-  gap:8px;padding:6px 12px;font-size:11px;color:var(--mut);text-transform:uppercase;letter-spacing:.5px;background:var(--surface)}
-@media(max-width:1100px){
-  .mheadrow{grid-template-columns:28px minmax(90px,1.2fr) minmax(110px,1fr) 78px 66px 66px 70px 56px;gap:6px}
-}
+/* 表头只有一份，由 mmRender 以 .mrow.mhead 渲染进 .mlist 内（sticky）。
+   曾经另有一份静态 .mheadrow 写在列表外面，于是每次渲染都出现两行表头。 */
 .mlist{border:1px solid var(--border);border-radius:10px;max-height:46vh;overflow-y:auto}
 /* 8 列：勾选 / 模型 id / 名称+徽标 / 推理档位 / 上下文 / 预算 / 倍率 / 测试 */
 .mrow{display:grid;grid-template-columns:30px minmax(120px,1.5fr) minmax(140px,1.3fr) 88px 74px 74px 80px 62px;
@@ -700,8 +696,7 @@ button .spin{border-color:var(--on-acc);border-top-color:transparent}
         <span class="grow"></span>
         <span class="mmbulk-hint" data-i18n="改动是草稿，点保存才生效">改动是草稿，点保存才生效</span>
       </div>
-      <div class="mheadrow"><span></span><span data-i18n="模型 ID">模型 ID</span><span data-i18n="名称">名称</span><span data-i18n="推理档">推理档</span><span style="text-align:right" data-i18n="上下文">上下文</span><span data-i18n="预算">预算</span><span data-i18n="倍率">倍率</span><span data-i18n="测试">测试</span></div>
-      <div class="mlist" id="mm-list-global"></div>
+            <div class="mlist" id="mm-list-global"></div>
       <div class="addrow">
         <input class="fid" id="mm-add-g-id" placeholder="自定义模型 ID，如 gpt-6.1-nova" data-i18n-placeholder="自定义模型 ID，如 gpt-6.1-nova">
         <input class="fnm" id="mm-add-g-nm" placeholder="显示名称（可选）" data-i18n-placeholder="显示名称（可选）">
@@ -805,8 +800,7 @@ button .spin{border-color:var(--on-acc);border-top-color:transparent}
         <span class="grow"></span>
         <span class="mmbulk-hint" data-i18n="改动是草稿，点保存才生效">改动是草稿，点保存才生效</span>
       </div>
-      <div class="mheadrow"><span></span><span data-i18n="模型 ID">模型 ID</span><span data-i18n="名称">名称</span><span data-i18n="推理档">推理档</span><span style="text-align:right" data-i18n="上下文">上下文</span><span data-i18n="预算">预算</span><span data-i18n="倍率">倍率</span><span data-i18n="测试">测试</span></div>
-      <div class="mlist" id="mm-list-cn"></div>
+            <div class="mlist" id="mm-list-cn"></div>
       <div class="addrow">
         <input class="fid" id="mm-add-c-id" placeholder="自定义模型 ID" data-i18n-placeholder="自定义模型 ID">
         <input class="fnm" id="mm-add-c-nm" placeholder="显示名称（可选）" data-i18n-placeholder="显示名称（可选）">
@@ -3388,7 +3382,7 @@ function mmRenderModels(realm){
   // selectors read as noise.
   html+='<div class="mrow mhead"><span></span><span>'+tr("模型 ID")+'</span><span>'+tr("名称")+'</span>'
     +'<span>'+tr("推理档")+'</span><span style="text-align:right">'+tr("上下文")+'</span>'
-    +'<span>'+tr("预算")+'</span><span>'+tr("倍率")+'</span><span></span></div>';
+    +'<span>'+tr("预算")+'</span><span>'+tr("倍率")+'</span><span>'+tr("测试")+'</span></div>';
   const cust=pick(m=>m.custom);
     const sec=(rows,title,opts)=>{if(!rows.length)return;html+=mmSection(emitRows(rows),title,null,rows.length,opts&&opts.style);};
     // 1) Free — x0.00 paling atas

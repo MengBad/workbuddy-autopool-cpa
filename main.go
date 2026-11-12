@@ -448,7 +448,7 @@ type registrationCapability struct {
 // normal release keeps the production defaults; -ldflags -X can label a test
 // binary without changing the provider/auth identifier (workbuddy).
 var (
-	version = "0.14.0"
+	version = "0.14.2"
 	// The provider/auth identifier stays "workbuddy" (credential files, model
 	// ids, config keys and CPAMP cards depend on it); only the display name
 	// reflects the AutoPool layer.

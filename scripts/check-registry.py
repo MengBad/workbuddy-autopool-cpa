@@ -7,6 +7,7 @@ is a user-visible bug (0.9.2 kept showing for four releases because of it).
 """
 import json
 import pathlib
+import re
 import sys
 
 root = pathlib.Path(__file__).resolve().parent.parent
@@ -32,4 +33,14 @@ for p in plugins:
     if p.get("install", {}).get("type") != "github-release":
         sys.exit(f"plugin {p['id']!r}: install.type must be github-release")
 
-print(f"registry.json ok: {plugins[0]['id']} v{version}")
+# main.go's version const is what `make build` stamps into a local binary (CI
+# overrides it with -ldflags -X main.version=<tag>). Letting it drift means a
+# hand-built plugin reports a version that is not the one in VERSION.
+main_go = (root / "main.go").read_text(encoding="utf-8")
+m = re.search(r'^\s*version\s*=\s*"([^"]+)"', main_go, re.M)
+if not m:
+    sys.exit("main.go: version constant not found")
+if m.group(1) != version:
+    sys.exit(f"main.go version {m.group(1)} != VERSION {version}")
+
+print(f"registry.json ok: {plugins[0]['id']} v{version} (main.go agrees)")
