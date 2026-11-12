@@ -3,7 +3,7 @@
 每次刷新按上游目录读取积分倍率与活动折扣、逐模型显示繁忙度、单个模型真实体积可用性测试、<br>
 以及一套围绕账号池的运维能力。</p>
 
-> **本项目是 [`zidanefaqih/codebuddy-intl-cpa`](https://github.com/zidanefaqih/codebuddy-intl-cpa) 的再维护分支（当前 v0.14.1）。**
+> **本项目是 [`zidanefaqih/codebuddy-intl-cpa`](https://github.com/zidanefaqih/codebuddy-intl-cpa) 的再维护分支（当前 v0.14.3）。**
 > 插件内部标识仍是 `workbuddy`，凭据格式、模型名、配置键、面板路径全部沿用，
 > 现有账号与客户端无需任何迁移。自动注册/批量补号已在 0.12 退役（见「与 0.11 的差异」）。
 
@@ -216,7 +216,7 @@
 每次打 tag 都由 CI 产出 linux/amd64 的 `workbuddy.so`：
 
 ```bash
-V=0.14.1
+V=0.14.3
 curl -fLO "https://github.com/MengBad/workbuddy-autopool-cpa/releases/download/v$V/workbuddy_${V}_linux_amd64.zip"
 unzip -o "workbuddy_${V}_linux_amd64.zip"        # 解出 workbuddy.so
 cp workbuddy.so /opt/cpa/plugins/workbuddy.so    # Docker 下 /opt/cpa/plugins 是 bind mount
@@ -243,7 +243,7 @@ docker restart cpa
 
 # 4) 确认
 docker logs cpa 2>&1 | grep "plugin registered.*workbuddy"
-# plugin registered plugin_id=workbuddy ... version=0.14.1
+# plugin registered plugin_id=workbuddy ... version=0.14.3
 ```
 
 回滚：`cp "$BK/workbuddy.so" /opt/cpa/plugins/workbuddy.so && docker restart cpa`
