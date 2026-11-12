@@ -30,3 +30,7 @@ request-usage.jsonl
 .env
 *.token
 gh_token
+
+# Python tooling
+__pycache__/
+*.pyc

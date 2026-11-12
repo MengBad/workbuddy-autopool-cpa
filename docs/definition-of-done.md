@@ -57,14 +57,14 @@
 
 | 文件 | 必须包含 |
 |---|---|
-| `README.md` | Features / Quickstart / Configuration / Lifecycle / Development / License |
-| `README_CN.md` | 中文版 |
+| `README.md` | 功能 / 安装 / 配置 / 管理 API / 面板 / 已知限制（中文，含英文徽章与目录） |
 | `CHANGELOG.md` | Keep a Changelog 格式，每版本日期 |
-| `docs/architecture.md` | 模块图 + 数据流 + 关键设计决策 + 与 CPA 的集成点 |
+| `docs/architecture.md` | 能力面 + 文件职责表 + 数据流 + 关键设计决策 + 与 CPA 的集成点 |
 | `docs/development.md` | 本地构建 / 测试 / 调试 / 发布流程 |
 | `LICENSE` | MIT |
-| `.gitignore` | 忽略 `*.so`、`*.h`、`bin/`、`dist/` |
-| `Makefile` | `make build` / `make test` / `make lint` / `make clean` / `make release` |
+| `.gitignore` | 忽略 `*.so`、`*.h`、`bin/`、`dist/`、凭据与运行态文件 |
+| `CONTRIBUTING.md` / `SECURITY.md` | 提交门禁 / 凭据处理与漏洞报告 |
+| `Makefile` | `make build` / `test` / `lint` / `clean` / `release` / `tag` / `check-registry` |
 
 ## F. 安全（红线）
 
