@@ -1,0 +1,32 @@
+# Build artifacts
+workbuddy.so
+workbuddy.h
+workbuddy.dylib
+workbuddy.dll
+*.so
+*.dylib
+*.dll
+dist/
+bin/
+
+# Test / coverage
+coverage.out
+coverage.html
+
+# Editor / OS
+.vscode/
+.idea/
+.DS_Store
+*.swp
+
+# Runtime data (never commit credentials)
+workbuddy-state.json
+workbuddy-pool.json
+session-affinity.json
+request-usage.jsonl
+*.log
+
+# Local secrets
+.env
+*.token
+gh_token

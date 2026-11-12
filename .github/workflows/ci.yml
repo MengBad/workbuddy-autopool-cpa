@@ -1,0 +1,137 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  test:
+    name: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.26'
+          cache: true
+
+      - name: gofmt
+        run: |
+          fmt=$(gofmt -l .)
+          if [ -n "$fmt" ]; then
+            echo "needs gofmt:"
+            echo "$fmt"
+            exit 1
+          fi
+
+      - name: vet
+        run: go vet ./...
+
+      - name: test (race)
+        run: go test -race -count=1 ./...
+
+      - name: build c-shared
+        run: CGO_ENABLED=1 go build -buildmode=c-shared -o /tmp/workbuddy.so .
+
+      - name: validate registry.json
+        run: python3 scripts/check-registry.py
+
+      - name: cache-trace tooling tests
+        run: python3 scripts/test-cache-trace-compare.py
+
+  release:
+    name: release
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.26'
+
+      - name: resolve version
+        id: meta
+        run: |
+          set -euo pipefail
+          V="${GITHUB_REF_NAME#v}"
+          echo "version=$V" >> "$GITHUB_OUTPUT"
+          echo "releasing v$V"
+
+      - name: build linux/amd64
+        env:
+          VERSION: ${{ steps.meta.outputs.version }}
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          CGO_ENABLED=1 go build -trimpath -buildmode=c-shared \
+            -ldflags "-s -w -X main.version=${VERSION}" -o dist/workbuddy.so .
+          rm -f dist/*.h
+          cp README.md LICENSE dist/
+          (cd dist && zip -q "workbuddy_${VERSION}_linux_amd64.zip" workbuddy.so README.md LICENSE)
+          (cd dist && sha256sum "workbuddy_${VERSION}_linux_amd64.zip" > "workbuddy_${VERSION}_linux_amd64.zip.sha256")
+
+      - name: stamp registry.json with the released version
+        env:
+          VERSION: ${{ steps.meta.outputs.version }}
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json, os, pathlib
+          v = os.environ['VERSION']
+          p = pathlib.Path('registry.json')
+          d = json.loads(p.read_text())
+          for plug in d.get('plugins', []):
+              if plug.get('id') == 'workbuddy':
+                  plug['version'] = v
+                  plug['release_tag'] = f'v{v}'
+          p.write_text(json.dumps(d, indent=2, ensure_ascii=False) + '\n')
+          print(p.read_text())
+          PY
+          cp registry.json dist/registry.json
+
+      - name: extract release notes from CHANGELOG
+        env:
+          VERSION: ${{ steps.meta.outputs.version }}
+        run: |
+          set -euo pipefail
+          python3 - "$VERSION" <<'PY'
+          import pathlib, re, sys
+          v = sys.argv[1]
+          text = pathlib.Path('CHANGELOG.md').read_text(encoding='utf-8')
+          m = re.search(rf'^##\s+v{re.escape(v)}\b.*$', text, re.M)
+          body = ''
+          if m:
+              rest = text[m.end():]
+              nxt = re.search(r'^##\s+v', rest, re.M)
+              body = (rest[:nxt.start()] if nxt else rest).strip()
+          pathlib.Path('dist/release-notes.md').write_text(
+              (body + '\n') if body else f'v{v}\n', encoding='utf-8')
+          print(body[:400])
+          PY
+
+      - name: publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.meta.outputs.version }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release upload "$TAG" dist/*.zip dist/*.sha256 dist/registry.json dist/release-notes.md \
+              --clobber --repo "$GITHUB_REPOSITORY"
+          else
+            gh release create "$TAG" dist/*.zip dist/*.sha256 dist/registry.json dist/release-notes.md \
+              --repo "$GITHUB_REPOSITORY" \
+              --title "v${VERSION}" \
+              --notes-file dist/release-notes.md
+          fi
