@@ -1436,6 +1436,10 @@ function saveKey(){
   setView(acctView.mode);
   load(false);
   mmCheckUpdate(false);
+  // The usage panel has its own poller, started at page load when no key was
+  // available yet. Entering the key has to (re)start it or the table stays on
+  // "无法加载用量：请先输入管理密钥" forever.
+  if(typeof initUsage==="function"){ try{ initUsage(); }catch(_){} }
 }
 function showAuth(){document.getElementById("authBox").style.display="block";const i=document.getElementById("keyInput");i&&i.focus()}
 function authHeaders(k){return k?{"Authorization":"Bearer "+k}:{}}
@@ -2862,6 +2866,13 @@ async function loadUsage(){
     lastUsageData=d;
     renderUsageData(d);
   }catch(e){
+    // No key yet is not a failure — the auth box is still up and the first
+    // load is expected to miss. Leave usageKeyOk alone so the poller survives,
+    // and let the saveKey() path start it once a key exists.
+    if(!getKey()){
+      lastUsageError="";
+      return;
+    }
     usageKeyOk=false;
     lastUsageError=e.message||String(e);
     renderUsageError(lastUsageError);
@@ -2939,6 +2950,9 @@ restartPollers();
 (function(){const el=document.getElementById("pollSel");if(el)el.value=String(pollMs());})();
 if(getKey()){
   load(false);
+  // initUsage() already ran at load time and bailed out if the key came from
+  // the URL rather than storage; make sure it is running either way.
+  if(typeof initUsage==="function"){ try{ initUsage(); }catch(_){} }
 }else{
   showAuth();
 }

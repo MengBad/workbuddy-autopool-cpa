@@ -3,6 +3,25 @@
 本分支在 [`zidanefaqih/codebuddy-intl-cpa`](https://github.com/zidanefaqih/codebuddy-intl-cpa) v0.10.0 基础上继续维护，
 从 v0.12.0 起由本仓库（[`MengBad/workbuddy-autopool-cpa`](https://github.com/MengBad/workbuddy-autopool-cpa)）发布。
 
+## v0.15.1 (2026-11-13) — 用量表在输入密钥后能加载
+
+**「CodeBuddy 用量记录」永远停在「无法加载用量：请先输入管理密钥」**，即使密钥已经输进去了。
+
+根因是时序：`initUsage()` 在页面 `load` 事件后 400ms 就跑了，而那时鉴权框还开着。
+`loadUsage()` 因为拿不到 key 抛异常，`catch` 里把 `usageKeyOk` 置成 `false` ——
+这个标志是轮询开关，一旦为 false，`setInterval` 里的 `loadUsage()` 就永远跳过。
+输入密钥只调用 `load(false)`（账号表），没有任何路径去重启 usage 轮询。
+
+修法两处，都不靠改那个标志：
+
+1. **没密钥不算失败**。`loadUsage()` 的 `catch` 里先判断 `getKey()`，为空就直接返回，
+   不写 `usageKeyOk`、不画错误行 —— 鉴权框还没关，这次本来就不该有数据。
+2. **密钥到手就启动**。`saveKey()`（手动输入）和 URL 带 `?key=` 两条路径都会调一次
+   `initUsage()`，把轮询真正拉起来。
+
+验证：全新会话（无 sessionStorage 密钥）打开面板 → 输入密钥 → 用量表立即出现
+两条真实记录（`hy3 (cnwb/hy3)`、20/2 与 16/19 token），不再是错误行。
+
 ## v0.15.0 (2026-11-13) — 仓库整理
 
 只做整理，不改行为。功能与 v0.14.3 完全一致。
