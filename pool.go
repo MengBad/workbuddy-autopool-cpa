@@ -625,12 +625,24 @@ func poolObserveCredits(authIndex, authID, uid, name, region string, cr *credits
 				rec.QuarantineUntil = now.Add(time.Duration(cfg.QuarantineMinutes) * time.Minute)
 			}
 		default:
-			// A positive balance disproves exhaustion; keep any manual quarantine.
-			if rec.State == poolStateExhausted {
+			// A positive balance disproves exhaustion, so any state the pool
+			// derived FROM exhaustion has to clear. That includes poolStateDisabled:
+			// when a CN account ran dry the lifecycle layer disabled its auth file,
+			// poolObserveCredits recorded state=disabled, and this branch only knew
+			// how to revive poolStateExhausted. The result was an account with a
+			// positive balance stuck at disabled forever — the host reports
+			// disabled=false, but the persisted state never moved, so the pool
+			// advertised 0 available while every account could actually serve.
+			//
+			// A quarantine the operator set by hand is still kept: only the
+			// exhaustion-derived state and its matching reason are cleared.
+			if rec.State == poolStateExhausted || rec.State == poolStateDisabled {
 				rec.State = poolStateActive
-				rec.Reason = ""
-				rec.QuarantineUntil = time.Time{}
-				rec.Failures = 0
+				if rec.Reason == "credits_exhausted" || rec.Reason == "" {
+					rec.Reason = ""
+					rec.QuarantineUntil = time.Time{}
+					rec.Failures = 0
+				}
 			}
 		}
 		return nil

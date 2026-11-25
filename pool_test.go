@@ -408,3 +408,80 @@ func TestPoolConfigEnvFallback(t *testing.T) {
 		t.Errorf("min_available = %d, want 4 from env", cfg.MinAvailable)
 	}
 }
+
+// The CN lifecycle layer disables an auth file when credits run out, and
+// poolObserveCredits then records state=disabled. When check-in later restores
+// credits, the observation hook has to revive that state too — it used to only
+// know how to revive poolStateExhausted, so an account with a positive balance
+// stayed disabled forever and the pool advertised 0 available while every
+// account could serve. Seen on a live deployment after a cycle refresh.
+func TestPoolObserveCreditsRevivesDisabledState(t *testing.T) {
+	f := newPoolFixture(t)
+	f.add(t, "c1", "copilot.tencent.com", false, 100)
+	f.install(t)
+
+	// Exhausted while the auth file is disabled (the CN lifecycle action).
+	dry := &creditsSummary{TotalRemain: 0, TotalUsed: 100, TotalSize: 100}
+	poolObserveCredits("idx-c1", "c1", "c1", "workbuddy-c1.json", realmCN, dry, true)
+	key := poolKey("c1", "c1", "workbuddy-c1.json")
+	rec := poolLoad().Accounts[key]
+	if rec == nil || rec.State != poolStateDisabled {
+		t.Fatalf("record = %+v, want disabled", rec)
+	}
+	// The disabled branch records the state only; the cooldown window belongs to
+	// the exhausted branch. Asserting a window here would encode a behaviour the
+	// code never had.
+
+	// The cycle refreshed and check-in re-enabled the credential: positive
+	// balance plus disabled=false must bring the state back to active.
+	refilled := &creditsSummary{TotalRemain: 322, TotalUsed: 3050, TotalSize: 3372}
+	poolObserveCredits("idx-c1", "c1", "c1", "workbuddy-c1.json", realmCN, refilled, false)
+	rec = poolLoad().Accounts[key]
+	if rec == nil || rec.State != poolStateActive {
+		t.Fatalf("record = %+v, want active after credits returned", rec)
+	}
+	if rec.Reason != "" {
+		t.Fatalf("reason = %q, want it cleared", rec.Reason)
+	}
+	if !rec.QuarantineUntil.IsZero() {
+		t.Fatalf("quarantine_until = %v, want cleared", rec.QuarantineUntil)
+	}
+	if rec.Failures != 0 {
+		t.Fatalf("failures = %d, want reset", rec.Failures)
+	}
+}
+
+// A quarantine the operator set by hand is not exhaustion-derived and must
+// survive a credit observation, even though the state itself revives.
+func TestPoolObserveCreditsKeepsManualQuarantineReason(t *testing.T) {
+	f := newPoolFixture(t)
+	f.add(t, "c2", "copilot.tencent.com", false, 100)
+	f.install(t)
+
+	key := poolKey("c2", "c2", "workbuddy-c2.json")
+	dry := &creditsSummary{TotalRemain: 0, TotalUsed: 100, TotalSize: 100}
+	poolObserveCredits("idx-c2", "c2", "c2", "workbuddy-c2.json", realmCN, dry, true)
+
+	// Operator parks the account for an unrelated reason.
+	if err := poolMutate(func(st *poolPersistFile) error {
+		rec := st.Accounts[key]
+		rec.Reason = "operator: investigating 11140"
+		rec.QuarantineUntil = time.Now().Add(2 * time.Hour)
+		return nil
+	}); err != nil {
+		t.Fatalf("poolMutate: %v", err)
+	}
+
+	refilled := &creditsSummary{TotalRemain: 500, TotalUsed: 0, TotalSize: 500}
+	poolObserveCredits("idx-c2", "c2", "c2", "workbuddy-c2.json", realmCN, refilled, false)
+	rec := poolLoad().Accounts[key]
+	if rec == nil || rec.State != poolStateActive {
+		t.Fatalf("record = %+v, want active", rec)
+	}
+	if rec.Reason != "operator: investigating 11140" {
+		t.Fatalf("reason = %q, want the operator's note preserved", rec.Reason)
+	}
+	if rec.QuarantineUntil.IsZero() {
+		t.Fatal("the operator's quarantine window was cleared")
+	}
+}

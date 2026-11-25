@@ -3,6 +3,36 @@
 本分支在 [`zidanefaqih/codebuddy-intl-cpa`](https://github.com/zidanefaqih/codebuddy-intl-cpa) v0.10.0 基础上继续维护，
 从 v0.12.0 起由本仓库（[`MengBad/workbuddy-autopool-cpa`](https://github.com/MengBad/workbuddy-autopool-cpa)）发布。
 
+## v0.15.2 (2026-11-25) — 池状态卡死在 disabled
+
+**有余额的账号被永久判为不可用，池子显示 0/N，实际每个账号都能服务。**
+
+CN 账号额度耗尽时，生命周期层会禁用它的 auth 文件，`poolObserveCredits` 据此写入
+`state=disabled`。等周期刷新、签到把额度补回来之后，这个函数只认得
+`poolStateExhausted` 这一个需要恢复的状态：
+
+```go
+default:
+    if rec.State == poolStateExhausted {   // disabled 走不到这里
+        rec.State = poolStateActive
+    }
+```
+
+于是 `disabled` 一旦写入就再也不会被撤销 —— 宿主那边明明报 `disabled=false`、
+`status=active`，持久化文件里的 `state` 却一直停在 `disabled`，池子永远算它不可用。
+
+这次在真实部署上撞到了：两个账号余额分别是 322 和 665，池子却报 `available 0/2`，
+直到手动 `POST /pool/check` 强制观测才恢复成 `2/2 healthy`。
+
+修法：`default` 分支同时恢复 `poolStateExhausted` 和 `poolStateDisabled`，
+但**只清理由耗尽推导出来的东西**（`reason == "credits_exhausted"` 的 reason、
+隔离窗口、failures）。运维手工设的隔离原因和时间窗原样保留 ——
+这条单独有测试守着。
+
+附带：v8.1.2 的宿主把 `SchemaVersion` 升到了 10，但管理响应的 HTML 转义由
+`schemaVersion < 6` 决定，本插件声明 schema 1，转义行为不变，面板的
+`htmlUnescape()` 仍然配套，无需改动。
+
 ## v0.15.1 (2026-11-13) — 用量表在输入密钥后能加载
 
 **「CodeBuddy 用量记录」永远停在「无法加载用量：请先输入管理密钥」**，即使密钥已经输进去了。
